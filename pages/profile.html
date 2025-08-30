@@ -7,125 +7,56 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-:root {
-  --primary-neon: #9b59b6;
-  --secondary-neon: #8e44ad;
-  --bg-color-start: #0c0c1e;
-  --bg-color-end: #1c1c3a;
-  --text-light: #e0e0e0;
-  --card-bg: rgba(0,0,0,0.5);
-  --button-hover: #a64ca6;
-}
-
 body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, var(--bg-color-start), var(--bg-color-end));
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  margin:0;
+  font-family:'Inter',sans-serif;
+  background: linear-gradient(135deg,#1c1c3a,#0c0c1e);
+  color:#e0e0e0;
 }
-
-.profile-container {
-  width: 90%;
-  max-width: 450px;
-  background: var(--card-bg);
-  backdrop-filter: blur(15px) saturate(180%);
-  border-radius: 25px;
-  border: 1px solid rgba(255,255,255,0.1);
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3), 0 0 40px rgba(155, 89, 182, 0.2);
+.container {
+  max-width:600px;
+  margin:auto;
+  padding:15px;
 }
-
+.card {
+  background: rgba(0,0,0,0.2);
+  border-radius:20px;
+  padding:15px;
+  margin-bottom:15px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.3);
+}
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  text-align:center;
+  font-size:1.5rem;
+  font-weight:600;
+  color:#8e8eec;
+  margin-bottom:15px;
 }
-
-.header h1 {
-  color: var(--primary-neon);
-  text-shadow: 0 0 10px var(--primary-neon), 0 0 20px var(--secondary-neon);
-  font-size: 1.6rem;
+input,button {
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  border:none;
 }
-
-.header a {
-  color: var(--primary-neon);
-  text-decoration: none;
-  font-size: 1rem;
-}
-
-.profile-section {
-  background: rgba(255,255,255,0.05);
-  padding: 15px;
-  border-radius: 15px;
-  margin-bottom: 15px;
-  text-align: center;
-  color: var(--text-light);
-  backdrop-filter: blur(10px);
-}
-
-.profile-section h2 {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
-  color: var(--primary-neon);
-}
-
-.action-button {
-  padding: 10px 20px;
-  border-radius: 20px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  color: #fff;
-  background: linear-gradient(45deg, var(--primary-neon), var(--secondary-neon));
-  box-shadow: 0 0 10px var(--primary-neon), 0 0 20px var(--secondary-neon);
-  transition: all 0.3s ease-in-out;
-  margin-top: 10px;
-}
-
-.action-button:hover {
-  background: var(--button-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 0 15px var(--primary-neon), 0 0 30px var(--secondary-neon);
-}
-
-@media (max-width: 450px){
-  .profile-container { padding: 15px; }
-  .header h1 { font-size: 1.4rem; }
-}
+input { background: rgba(255,255,255,0.05); color:#e0e0e0; }
+button { background:#8e8eec; color:white; }
 </style>
 </head>
 <body>
-
-<div class="profile-container">
-  <div class="header">
-    <h1>Lumina AI Profile</h1>
-    <a href="dashboard.html">Back</a>
+<div class="container">
+  <div class="header">Profile</div>
+  <div class="card">
+    <label>Username</label>
+    <input type="text" value="User123">
+    <label>Email</label>
+    <input type="email" value="user@example.com">
+    <button>Save Changes</button>
   </div>
-
-  <div class="profile-section">
-    <h2>User Info</h2>
-    <p>Name: John Doe</p>
-    <p>Email: johndoe@example.com</p>
-    <button class="action-button">Edit Profile</button>
-  </div>
-
-  <div class="profile-section">
-    <h2>AI Stats</h2>
-    <p>Conversations: 12</p>
-    <p>Books Created: 3</p>
-    <button class="action-button">View Details</button>
-  </div>
-
-  <div class="profile-section">
+  <div class="card">
     <h2>Account Actions</h2>
-    <button class="action-button">Logout</button>
-    <button class="action-button" onclick="location.href='setting.html'">Settings</button>
+    <button>Logout</button>
   </div>
 </div>
-
 </body>
 </html>
