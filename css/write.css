@@ -1,131 +1,152 @@
-/* write.css - mobile-friendly version for books and pages */
-
-/* Container for all books */
-#booksContainer {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    padding: 15px;
-    justify-content: center;
+/* Root variables for colors and spacing */
+:root {
+    --bg-color: #0c0c1e;
+    --card-bg: rgba(18, 18, 30, 0.9);
+    --accent-color: #8e8eec;
+    --text-color: #e0e0e0;
+    --border-color: rgba(255,255,255,0.1);
 }
 
-/* Individual book box */
-.book-box {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    width: 120px;
-    height: 150px;
+/* Page background */
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Container for all books */
+.books-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    padding: 12px;
+    flex-wrap: wrap;
+}
+
+/* Single book card */
+.book-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 20px 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative;
-    text-align: center;
+    min-height: 120px;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-
-.book-box:hover {
-    transform: scale(1.05);
-    border-color: #8e8eec;
-}
-
-/* Title inside book box */
-.book-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #e0e0e0;
-    margin-bottom: 10px;
-    word-wrap: break-word;
-}
-
-/* Open and delete buttons */
-.book-box button {
-    margin-top: 5px;
-    padding: 5px 8px;
-    font-size: 0.8rem;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    background: rgba(142, 142, 236, 0.2);
-    color: #fff;
     transition: all 0.2s ease;
 }
 
-.book-box button:hover {
-    background: #8e8eec;
+.book-card:hover {
+    transform: scale(1.05);
+    border-color: var(--accent-color);
 }
 
-/* Page editor */
-.page-editor {
+/* Book title */
+.book-title {
+    margin-top: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+/* Add new book button */
+.add-book {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    border: 2px dashed var(--accent-color);
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+}
+
+/* Page view inside a book */
+.page-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 15px;
-    width: 100%;
+    padding: 12px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-top: 12px;
+    flex-grow: 1;
+    min-height: 60vh;
 }
 
 /* Page title input */
-#pageTitle {
-    font-size: 1rem;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.05);
-    color: #fff;
+.page-title {
     width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-color);
+    margin-bottom: 10px;
 }
 
 /* Page content textarea */
-#pageContent {
-    flex-grow: 1;
-    min-height: 300px;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.05);
-    color: #fff;
+.page-content {
     width: 100%;
-    resize: none;
-}
-
-/* Page controls buttons */
-.page-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-}
-
-.page-controls button {
-    padding: 8px 12px;
+    flex-grow: 1;
+    padding: 12px;
     border-radius: 10px;
-    border: none;
-    background: rgba(142, 142, 236, 0.2);
-    color: #fff;
+    border: 1px solid var(--border-color);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-color);
+    font-size: 1rem;
+    resize: none;
+    overflow-y: auto;
+}
+
+/* Add new page button inside a book */
+.add-page {
+    margin-top: 10px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--accent-color);
+    background: transparent;
+    color: var(--accent-color);
+    font-weight: 600;
+    text-align: center;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease;
 }
 
-.page-controls button:hover {
-    background: #8e8eec;
+.add-page:hover {
+    background: var(--accent-color);
+    color: var(--bg-color);
 }
 
-/* Mobile tweaks */
-@media screen and (max-width: 480px) {
-    .book-box {
-        width: 100px;
-        height: 120px;
+/* Responsive adjustments for smaller screens */
+@media (max-width: 480px) {
+    .books-container {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+        padding: 8px;
     }
 
-    #pageContent {
-        min-height: 200px;
+    .book-card {
+        min-height: 100px;
+        padding: 16px 8px;
     }
 
-    .page-controls {
-        flex-direction: column;
+    .page-title, .page-content {
+        font-size: 0.95rem;
+    }
+
+    .add-page {
+        padding: 8px 12px;
+        font-size: 0.9rem;
     }
 }
