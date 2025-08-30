@@ -1,28 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="../css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - Lumina AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root {
+  --primary-neon: #9b59b6;
+  --secondary-neon: #8e44ad;
+  --bg-color-start: #0c0c1e;
+  --bg-color-end: #1c1c3a;
+  --text-light: #e0e0e0;
+  --card-bg: rgba(0,0,0,0.5);
+  --button-hover: #a64ca6;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, var(--bg-color-start), var(--bg-color-end));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.particle-bg {
+  position: fixed;
+  top:0; left:0; width:100%; height:100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--primary-neon);
+  opacity: 0;
+  animation: particleMove linear infinite;
+  box-shadow: 0 0 8px var(--primary-neon);
+}
+
+@keyframes particleMove {
+  0% { transform: translateZ(0) scale(0.5); opacity:0; }
+  10% { opacity: 0.3; }
+  80% { opacity: 0.1; }
+  100% { transform: translate3d(var(--x), var(--y), var(--z)) scale(var(--s)); opacity:0; }
+}
+
+.dashboard-container {
+  position: relative;
+  z-index: 1;
+  width: 90%;
+  max-width: 450px;
+  background: var(--card-bg);
+  backdrop-filter: blur(15px) saturate(180%);
+  border-radius: 25px;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3), 0 0 40px rgba(155, 89, 182, 0.2);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  color: var(--primary-neon);
+  text-shadow: 0 0 10px var(--primary-neon), 0 0 20px var(--secondary-neon);
+  font-size: 1.6rem;
+}
+
+.header a {
+  color: var(--primary-neon);
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.dashboard-section {
+  background: rgba(255,255,255,0.05);
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 15px;
+  text-align: center;
+  color: var(--text-light);
+  backdrop-filter: blur(10px);
+}
+
+.dashboard-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: var(--primary-neon);
+}
+
+.action-button {
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(45deg, var(--primary-neon), var(--secondary-neon));
+  box-shadow: 0 0 10px var(--primary-neon), 0 0 20px var(--secondary-neon);
+  transition: all 0.3s ease-in-out;
+}
+
+.action-button:hover {
+  background: var(--button-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px var(--primary-neon), 0 0 30px var(--secondary-neon);
+}
+
+@media (max-width: 450px){
+  .dashboard-container { padding: 15px; }
+  .header h1 { font-size: 1.4rem; }
+}
+</style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to Your Dashboard</h1>
-        <nav>
-            <a href="index.html">Home</a>
-            <a href="settings.html">Settings</a>
-            <a href="login.html">Logout</a>
-        </nav>
-    </header>
-    <main>
-        <section>
-            <h2>Your AI Tools</h2>
-            <p>This is where user-specific content, AI chats, and other features will go.</p>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2025 Infinite AI. All Rights Reserved.</p>
-    </footer>
+<div class="particle-bg" id="particles"></div>
+
+<div class="dashboard-container">
+  <div class="header">
+    <h1>Lumina AI Dashboard</h1>
+    <a href="profile.html">Profile</a>
+  </div>
+
+  <div class="dashboard-section">
+    <h2>AI Assistant</h2>
+    <p>Access your AI agent and start chatting.</p>
+    <button class="action-button" onclick="location.href='ai.html'">Open Chat</button>
+  </div>
+
+  <div class="dashboard-section">
+    <h2>Your Books</h2>
+    <p>View or continue your saved writings.</p>
+    <button class="action-button" onclick="location.href='write.html'">Open Writer</button>
+  </div>
+
+  <div class="dashboard-section">
+    <h2>Settings</h2>
+    <p>Manage your account and preferences.</p>
+    <button class="action-button" onclick="location.href='setting.html'">Go to Settings</button>
+  </div>
+</div>
+
+<script>
+  const particleContainer = document.getElementById('particles');
+  for(let i=0;i<50;i++){
+    const p = document.createElement('div');
+    p.classList.add('particle');
+    p.style.setProperty('--x', Math.random()*100 + 'vw');
+    p.style.setProperty('--y', Math.random()*100 + 'vh');
+    p.style.setProperty('--z', Math.random()*100 + 'px');
+    p.style.setProperty('--s', (Math.random()+0.5));
+    particleContainer.appendChild(p);
+  }
+</script>
+
 </body>
 </html>
