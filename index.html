@@ -1,217 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumina AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root {
-            --bg-gradient-start: #1c1c3a;
-            --bg-gradient-end: #0c0c1e;
-            --card-bg-light: rgba(255, 255, 255, 0.05);
-            --card-bg-dark: rgba(0, 0, 0, 0.2);
-            --border-color: rgba(255,255,255,0.1);
-            --text-color-light: #e0e0e0;
-            --text-color-dark: #b0b0b0;
-            --primary-accent: #8e8eec;
-            --secondary-accent: #a9a9ed;
-            --chat-bubble-user: #6c63ff;
-            --chat-bubble-agent: rgba(255,255,255,0.1);
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
-            font-family: 'Inter', sans-serif;
-            color: var(--text-color-light);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow-x: hidden;
-        }
-
-        /* Particle Background */
-        .particle-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .particle {
-            position: absolute;
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background-color: var(--primary-accent);
-            opacity: 0;
-            animation: particleFadeMove linear infinite;
-        }
-
-        @keyframes particleFadeMove {
-            0% { transform: translateZ(0) scale(0.5); opacity: 0; }
-            10% { opacity: 0.2; }
-            80% { opacity: 0.1; }
-            100% { transform: translate3d(var(--x), var(--y), var(--z)) scale(var(--s)); opacity: 0; }
-        }
-
-        /* Main container */
-        .aether-ui-container {
-            position: relative;
-            z-index: 1;
-            width: 95%;
-            max-width: 450px;
-            height: 90vh;
-            background: var(--card-bg-dark);
-            backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--border-color);
-            border-radius: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3), 0 0 40px rgba(142,142,236,0.15);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .header {
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--card-bg-light);
-            backdrop-filter: blur(15px);
-            border-radius: 25px 25px 0 0;
-        }
-
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--primary-accent);
-        }
-
-        .chat-history {
-            flex-grow: 1;
-            padding: 15px 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .message-container {
-            display: flex;
-            align-items: flex-end;
-        }
-
-        .message-container.user {
-            justify-content: flex-end;
-        }
-
-        .message-bubble {
-            max-width: 70%;
-            padding: 10px 15px;
-            border-radius: 20px;
-            font-size: 0.95rem;
-            word-wrap: break-word;
-        }
-
-        .message-container.user .message-bubble {
-            background-color: var(--chat-bubble-user);
-            color: white;
-            border-bottom-right-radius: 5px;
-        }
-
-        .message-container.agent .message-bubble {
-            background-color: var(--chat-bubble-agent);
-            color: var(--text-color-light);
-            border-bottom-left-radius: 5px;
-        }
-
-        .chat-input-area {
-            padding: 10px 15px;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            background: var(--card-bg-light);
-            backdrop-filter: blur(15px);
-        }
-
-        .chat-input {
-            flex-grow: 1;
-            border-radius: 25px;
-            padding: 10px 15px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.08);
-            color: var(--text-color-light);
-        }
-
-        .send-btn {
-            background: var(--primary-accent);
-            border: none;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 20px;
-        }
-
-        @media (max-width: 480px) {
-            .aether-ui-container {
-                width: 100%;
-                height: 100vh;
-                border-radius: 0;
-            }
-            .header h1 {
-                font-size: 1.3rem;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumina AI Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css"> <!-- Your existing styles -->
 </head>
 <body>
-    <div class="particle-bg"></div>
-    <div class="aether-ui-container">
-        <div class="header">
-            <h1>Lumina AI</h1>
+
+<!-- Background image -->
+<div class="login-bg" style="background-image: url('../assets/images/your-cyberpunk-bg.jpg');">
+    <div class="login-container">
+        <!-- Logo -->
+        <div class="logo">
+            <img src="../assets/images/logo.png" alt="Lumina AI" />
         </div>
-        <div class="chat-history" id="chat-history">
-            <!-- Messages will appear here -->
+
+        <!-- Login Form -->
+        <div class="login-form">
+            <input type="email" placeholder="Email" id="email" required>
+            <input type="password" placeholder="Password" id="password" required>
+            <button id="login-btn">Login</button>
         </div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" class="chat-input" placeholder="Type your message...">
-            <button id="send-btn" class="send-btn">Send</button>
+
+        <!-- Optional Sign Up link -->
+        <div class="signup-link">
+            <a href="pages/signup.html">Sign Up</a>
         </div>
     </div>
+</div>
 
-    <script>
-        const chatHistory = document.getElementById('chat-history');
-        const input = document.getElementById('chat-input');
-        const sendBtn = document.getElementById('send-btn');
+<script>
+document.getElementById('login-btn').addEventListener('click', function() {
+    // You can add validation here later
+    // Redirect to AI page
+    window.location.href = 'pages/ai.html';
+});
+</script>
 
-        sendBtn.addEventListener('click', () => {
-            const msg = input.value.trim();
-            if(msg) {
-                const userDiv = document.createElement('div');
-                userDiv.classList.add('message-container', 'user');
-                userDiv.innerHTML = `<div class="message-bubble">${msg}</div>`;
-                chatHistory.appendChild(userDiv);
-                input.value = '';
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-
-                // Simulated AI response
-                setTimeout(() => {
-                    const agentDiv = document.createElement('div');
-                    agentDiv.classList.add('message-container', 'agent');
-                    agentDiv.innerHTML = `<div class="message-bubble">Lumina AI response...</div>`;
-                    chatHistory.appendChild(agentDiv);
-                    chatHistory.scrollTop = chatHistory.scrollHeight;
-                }, 600);
-            }
-        });
-    </script>
 </body>
 </html>
