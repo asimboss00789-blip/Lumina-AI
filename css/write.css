@@ -1,24 +1,7 @@
-/* Root Variables */
-:root {
-    --bg-color: #0f0f1e;
-    --card-bg: rgba(20, 20, 40, 0.85);
-    --border-color: rgba(255, 255, 255, 0.1);
-    --text-color: #e0e0e0;
-    --accent-color: #8e8eec;
-    --button-bg: #1c1c3a;
-    --button-hover: #8e8eec;
-}
+/* write.css - mobile-friendly version for books and pages */
 
-/* Body */
-body {
-    margin: 0;
-    font-family: 'Inter', sans-serif;
-    background: var(--bg-color);
-    color: var(--text-color);
-}
-
-/* Books Container */
-.books-container {
+/* Container for all books */
+#booksContainer {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
@@ -26,120 +9,123 @@ body {
     justify-content: center;
 }
 
-/* Single Book */
-.book {
-    width: 120px;
-    height: 160px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
+/* Individual book box */
+.book-box {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 15px;
+    width: 120px;
+    height: 150px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
-    cursor: pointer;
     position: relative;
-    transition: transform 0.2s ease;
-}
-
-.book:hover {
-    transform: scale(1.05);
-}
-
-/* Plus Icon */
-.book .plus {
-    font-size: 2rem;
-    color: var(--accent-color);
-}
-
-/* Book Title */
-.book-title {
-    margin-top: 10px;
-    font-size: 0.9rem;
     text-align: center;
-}
-
-/* Writing Area */
-.write-container {
-    display: flex;
-    flex-direction: column;
-    width: 95%;
-    max-width: 600px;
-    margin: 15px auto;
-    background: var(--card-bg);
-    border-radius: 15px;
-    padding: 15px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-
-/* Page Title */
-.page-title {
-    width: 100%;
-    padding: 10px 15px;
-    font-size: 1.1rem;
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
-    margin-bottom: 10px;
-    background: #1a1a2e;
-    color: var(--text-color);
-}
-
-/* Textarea for writing */
-.page-textarea {
-    width: 100%;
-    height: 300px;
-    background: #1a1a2e;
-    color: var(--text-color);
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
-    padding: 15px;
-    resize: vertical;
-    font-size: 1rem;
-    line-height: 1.4rem;
-}
-
-/* Add Page Button */
-.add-page-btn {
-    margin-top: 10px;
-    align-self: flex-end;
-    padding: 10px 20px;
-    background: var(--button-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
     cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.book-box:hover {
+    transform: scale(1.05);
+    border-color: #8e8eec;
+}
+
+/* Title inside book box */
+.book-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 10px;
+    word-wrap: break-word;
+}
+
+/* Open and delete buttons */
+.book-box button {
+    margin-top: 5px;
+    padding: 5px 8px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: rgba(142, 142, 236, 0.2);
+    color: #fff;
     transition: all 0.2s ease;
 }
 
-.add-page-btn:hover {
-    background: var(--button-hover);
-    color: #fff;
+.book-box button:hover {
+    background: #8e8eec;
 }
 
-/* Pages List Container */
-.pages-list {
+/* Page editor */
+.page-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    width: 100%;
+}
+
+/* Page title input */
+#pageTitle {
+    font-size: 1rem;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    width: 100%;
+}
+
+/* Page content textarea */
+#pageContent {
+    flex-grow: 1;
+    min-height: 300px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    width: 100%;
+    resize: none;
+}
+
+/* Page controls buttons */
+.page-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-/* Single Page Box */
-.page-box {
-    width: 60px;
-    height: 60px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
+    gap: 8px;
     justify-content: center;
-    cursor: pointer;
-    font-size: 1.2rem;
-    color: var(--accent-color);
 }
 
-.page-box:hover {
-    transform: scale(1.1);
-    border-color: var(--accent-color);
+.page-controls button {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(142, 142, 236, 0.2);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.page-controls button:hover {
+    background: #8e8eec;
+}
+
+/* Mobile tweaks */
+@media screen and (max-width: 480px) {
+    .book-box {
+        width: 100px;
+        height: 120px;
+    }
+
+    #pageContent {
+        min-height: 200px;
+    }
+
+    .page-controls {
+        flex-direction: column;
+    }
 }
