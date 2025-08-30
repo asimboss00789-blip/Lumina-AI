@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Write - Lumina AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #1c1c3a;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .book-box {
+            background: rgba(142, 142, 236, 0.2);
+            border-radius: 15px;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .book-box:hover {
+            transform: scale(1.05);
+        }
+
+        .book-box span {
+            font-size: 3rem;
+            color: #8e8eec;
+            font-weight: 700;
+        }
+
+        /* Book editor */
+        .book-editor {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .book-header {
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-sidebar {
+            width: 50%;
+            background: rgba(0,0,0,0.15);
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .page-list button {
+            width: 100%;
+            background: rgba(142,142,236,0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            text-align: left;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .page-list button.active {
+            background: #8e8eec;
+        }
+
+        .page-editor {
+            width: 100%;
+            flex-grow: 1;
+            padding: 15px;
+            background: rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .page-editor textarea {
+            width: 100%;
+            height: 90%;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            color: #fff;
+            font-size: 1rem;
+            resize: none;
+            outline: none;
+        }
+
+        .add-page-btn {
+            margin-top: 10px;
+            background: #8e8eec;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .book-editor {
+                flex-direction: column;
+            }
+
+            .page-sidebar {
+                width: 100%;
+                height: 150px;
+                display: flex;
+                overflow-x: auto;
+                padding: 5px;
+            }
+
+            .page-list button {
+                flex: 0 0 auto;
+                margin-right: 8px;
+            }
+
+            .page-editor {
+                width: 100%;
+                flex-grow: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Book Grid -->
+    <div class="book-grid" id="bookGrid">
+        <!-- Example Book Boxes -->
+        <div class="book-box" onclick="createBook()"><span>+</span></div>
+    </div>
+
+    <!-- Book Editor -->
+    <div class="book-editor" id="bookEditor">
+        <div class="book-header">
+            <h2 id="bookTitle">Book Title</h2>
+            <button onclick="closeBook()">Close</button>
+        </div>
+        <div class="page-sidebar">
+            <div class="page-list" id="pageList">
+                <!-- Pages will be added dynamically -->
+            </div>
+            <button class="add-page-btn" onclick="addPage()">+ Add Page</button>
+        </div>
+        <div class="page-editor">
+            <textarea id="pageContent" placeholder="Write your page here..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        let currentBook = null;
+        let currentPage = 0;
+        let books = {};
+
+        function createBook() {
+            let name = prompt("Enter book name:");
+            if(!name) return;
+            let bookId = Date.now();
+            books[bookId] = {name: name, pages: [""]};
+
+            // Add book box
+            let box = document.createElement("div");
+            box.className = "book-box";
+            box.innerHTML = "<span>"+name+"</span>";
+            box.onclick = () => openBook(bookId);
+            document.getElementById("bookGrid").appendChild(box);
+        }
+
+        function openBook(id) {
+            currentBook = id;
+            currentPage = 0;
+            document.getElementById("bookGrid").style.display = "none";
+            document.getElementById("bookEditor").style.display = "flex";
+            document.getElementById("bookTitle").innerText = books[id].name;
+            renderPages();
+            loadPageContent();
+        }
+
+        function closeBook() {
+            document.getElementById("bookGrid").style.display = "grid";
+            document.getElementById("bookEditor").style.display = "none";
+        }
+
+        function renderPages() {
+            const pageList = document.getElementById("pageList");
+            pageList.innerHTML = "";
+            books[currentBook].pages.forEach((p, idx) => {
+                let btn = document.createElement("button");
+                btn.innerText = "Page " + (idx + 1);
+                if(idx === currentPage) btn.classList.add("active");
+                btn.onclick = () => {
+                    savePageContent();
+                    currentPage = idx;
+                    loadPageContent();
+                    renderPages();
+                };
+                pageList.appendChild(btn);
+            });
+        }
+
+        function addPage() {
+            savePageContent();
+            books[currentBook].pages.push("");
+            currentPage = books[currentBook].pages.length - 1;
+            renderPages();
+            loadPageContent();
+        }
+
+        function savePageContent() {
+            if(currentBook !== null) {
+                books[currentBook].pages[currentPage] = document.getElementById("pageContent").value;
+            }
+        }
+
+        function loadPageContent() {
+            if(currentBook !== null) {
+                document.getElementById("pageContent").value = books[currentBook].pages[currentPage];
+            }
+        }
+    </script>
+
+</body>
+</html>
