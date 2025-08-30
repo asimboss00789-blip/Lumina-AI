@@ -1,116 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumina AI</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="js/script.js" defer></script>
-    <style>
-        /* Fullscreen cyberpunk background */
-        body {
-            margin: 0;
-            font-family: 'Arial', sans-serif;
-            background: url('assets/images/home-bg.jpg') no-repeat center center fixed;
-            background-size: cover;
-            color: #fff;
-            overflow-x: hidden;
-        }
-
-        /* Header */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 40px;
-            background: rgba(0,0,0,0.5);
-        }
-
-        /* Neon logo */
-        .logo {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #a020f0; /* neon purple */
-            text-shadow: 0 0 10px #a020f0, 0 0 20px #a020f0, 0 0 30px #ff00ff;
-            cursor: pointer;
-        }
-
-        /* Button styles */
-        .btn {
-            padding: 12px 24px;
-            margin-left: 10px;
-            font-size: 1rem;
-            border: none;
-            border-radius: 15px;
-            cursor: pointer;
-            text-shadow: 0 0 5px #fff;
-            transition: 0.3s;
-            box-shadow: 0 0 10px rgba(255,255,255,0.5);
-        }
-
-        .btn-ai {
-            background: #8a2be2;
-            color: #fff;
-            box-shadow: 0 0 15px #8a2be2;
-        }
-
-        .btn-write {
-            background: #1e90ff;
-            color: #fff;
-            box-shadow: 0 0 15px #1e90ff;
-        }
-
-        .btn-login {
-            background: #ff1493;
-            color: #fff;
-            box-shadow: 0 0 15px #ff1493;
-        }
-
-        .btn-signup {
-            background: #00ffff;
-            color: #000;
-            box-shadow: 0 0 15px #00ffff;
-        }
-
-        /* Center content */
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: calc(100vh - 80px); /* header height deducted */
-            text-align: center;
-        }
-
-        .main-content h1 {
-            font-size: 4rem;
-            text-shadow: 0 0 20px #ff00ff;
-            margin-bottom: 40px;
-        }
-
-        .main-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumina AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root {
+    --bg-gradient-start: #1c1c3a;
+    --bg-gradient-end: #0c0c1e;
+    --card-bg-light: rgba(255,255,255,0.05);
+    --card-bg-dark: rgba(0,0,0,0.2);
+    --border-color: rgba(255,255,255,0.1);
+    --text-color-light: #e0e0e0;
+    --primary-accent: #8e8eec;
+    --secondary-accent: #a9a9ed;
+    --chat-bubble-user: #4c1c85;
+    --chat-bubble-agent: rgba(142,142,236,0.2);
+}
+body {
+    background: url('assets/images/home-bg.jpg') center/cover no-repeat, linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+    font-family: 'Inter', sans-serif;
+    color: var(--text-color-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin:0;
+    overflow:hidden;
+}
+.aether-ui-container {
+    width: 95%;
+    max-width: 450px;
+    height: 90vh;
+    background: var(--card-bg-dark);
+    backdrop-filter: blur(15px) saturate(180%);
+    border-radius: 25px;
+    display: flex;
+    flex-direction: column;
+    overflow:hidden;
+    transform-style: preserve-3d;
+    animation: fadeInScale 0.8s ease-out;
+}
+@keyframes fadeInScale { from {opacity:0; transform:scale(0.95) translateY(10px);} to {opacity:1; transform:scale(1) translateY(0);} }
+.header {
+    padding: 15px 20px;
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    background: var(--card-bg-light);
+    border-radius:25px 25px 0 0;
+}
+.header h1 {
+    font-weight:600;
+    font-size:1.5rem;
+    color: var(--primary-accent);
+    text-shadow:0 0 5px rgba(142,142,236,0.5);
+    margin:0;
+}
+.chat-history {
+    flex-grow:1;
+    padding:15px;
+    overflow-y:auto;
+    -ms-overflow-style:none;
+    scrollbar-width:none;
+}
+.chat-history::-webkit-scrollbar {display:none;}
+.message-container {display:flex; margin-bottom:12px; align-items:flex-end;}
+.message-bubble {
+    padding:10px 15px;
+    border-radius:20px;
+    max-width:75%;
+    word-wrap: break-word;
+}
+.message-container.user .message-bubble {
+    background-color: var(--chat-bubble-user);
+    color:white;
+    margin-left:auto;
+}
+.message-container.agent .message-bubble {
+    background-color: var(--chat-bubble-agent);
+    color: var(--text-color-light);
+    margin-right:auto;
+}
+.chat-input-area {
+    display:flex;
+    gap:10px;
+    padding:10px 15px;
+    border-top:1px solid var(--border-color);
+    background: var(--card-bg-light);
+    border-radius:0 0 25px 25px;
+}
+.chat-input {
+    flex-grow:1;
+    padding:10px 15px;
+    border-radius:20px;
+    background: rgba(255,255,255,0.08);
+    color: var(--text-color-light);
+    border:none;
+    outline:none;
+}
+.send-btn {
+    padding:10px 15px;
+    background: var(--primary-accent);
+    color:white;
+    border:none;
+    border-radius:20px;
+    cursor:pointer;
+}
+.send-btn:hover {
+    background: var(--secondary-accent);
+}
+@media(max-width:480px){
+    .aether-ui-container {width: 95%; height: 90vh;}
+    .header h1 {font-size:1.3rem;}
+}
+</style>
 </head>
 <body>
-    <header>
-        <div class="logo" onclick="window.location.href='index.html'">Lumina AI</div>
-        <div class="nav-buttons">
-            <button class="btn btn-login" onclick="window.location.href='pages/login.html'">Login</button>
-            <button class="btn btn-signup" onclick="window.location.href='pages/signup.html'">Sign Up</button>
-        </div>
-    </header>
-
-    <div class="main-content">
-        <h1>Welcome to Lumina AI</h1>
-        <div class="main-buttons">
-            <button class="btn btn-ai" onclick="window.location.href='pages/ai.html'">AI Assistant</button>
-            <button class="btn btn-write" onclick="window.location.href='pages/write.html'">Write Your Book</button>
+<div class="aether-ui-container">
+    <div class="header">
+        <h1>Lumina AI</h1>
+    </div>
+    <div class="chat-history" id="chatHistory">
+        <div class="message-container agent">
+            <div class="message-bubble">Hello! I am Lumina, your AI assistant.</div>
         </div>
     </div>
+    <div class="chat-input-area">
+        <input type="text" placeholder="Type a message..." class="chat-input" id="chatInput">
+        <button class="send-btn" id="sendBtn">Send</button>
+    </div>
+</div>
+<script>
+const sendBtn = document.getElementById('sendBtn');
+const chatInput = document.getElementById('chatInput');
+const chatHistory = document.getElementById('chatHistory');
+sendBtn.addEventListener('click', ()=>{ 
+    const userMessage = chatInput.value.trim();
+    if(!userMessage) return;
+    const userDiv = document.createElement('div');
+    userDiv.className = 'message-container user';
+    userDiv.innerHTML = `<div class="message-bubble">${userMessage}</div>`;
+    chatHistory.appendChild(userDiv);
+    chatInput.value='';
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+    // Placeholder for AI response
+    setTimeout(()=>{ 
+        const aiDiv = document.createElement('div');
+        aiDiv.className='message-container agent';
+        aiDiv.innerHTML=`<div class="message-bubble">Lumina is thinking...</div>`;
+        chatHistory.appendChild(aiDiv);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    },800);
+});
+</script>
 </body>
 </html>
