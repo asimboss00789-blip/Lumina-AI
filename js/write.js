@@ -1,93 +1,106 @@
 // write.js
 
-const apiBase = '/api'; // Base URL for API
+// Global user (replace with actual login system later)
+let currentUser = "guest";
 
-let currentUser = 'guest'; // Default user; replace with logged-in user
-let currentBook = null;
+// DOM Elements
+const booksContainer = document.getElementById("books-container");
 
-// Elements
-const booksContainer = document.getElementById('books-container');
-const pagesContainer = document.getElementById('pages-container');
-const addBookBtn = document.getElementById('add-book-btn');
-const pageTitleInput = document.getElementById('page-title');
-const pageContentInput = document.getElementById('page-content');
-const addPageBtn = document.getElementById('add-page-btn');
+// Load existing books for user
+function loadBooks() {
+    booksContainer.innerHTML = "";
+    const userBooks = JSON.parse(localStorage.getItem(`books_${currentUser}`)) || [];
+    userBooks.forEach((book, index) => {
+        const bookEl = document.createElement("div");
+        bookEl.className = "book-item";
+        bookEl.dataset.index = index;
+        bookEl.innerHTML = `
+            <div class="book-title">${book.name}</div>
+            <div class="pages-container"></div>
+            <button class="delete-book">Delete Book</button>
+            <button class="add-page">+</button>
+        `;
+        booksContainer.appendChild(bookEl);
 
-// Load books for user
-async function loadBooks() {
-    booksContainer.innerHTML = '';
-    const res = await fetch(`${apiBase}/books/${currentUser}`);
-    const books = await res.json();
-
-    books.forEach(book => {
-        const bookDiv = document.createElement('div');
-        bookDiv.className = 'book-box';
-        bookDiv.textContent = book.replace('.json', '');
-        bookDiv.addEventListener('click', () => {
-            currentBook = book.replace('.json', '');
-            loadPages(currentBook);
+        // Render pages
+        const pagesContainer = bookEl.querySelector(".pages-container");
+        book.pages.forEach((page, pageIndex) => {
+            const pageEl = document.createElement("div");
+            pageEl.className = "page-item";
+            pageEl.dataset.index = pageIndex;
+            pageEl.innerHTML = `
+                <div class="page-title">${page.title}</div>
+                <button class="delete-page">x</button>
+            `;
+            pagesContainer.appendChild(pageEl);
         });
-        booksContainer.appendChild(bookDiv);
     });
 }
 
-// Create a new book
-addBookBtn.addEventListener('click', async () => {
-    const bookName = prompt('Enter book name:');
-    if (!bookName) return;
-    await fetch(`${apiBase}/books/${currentUser}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookName })
-    });
-    currentBook = bookName;
+// Save books for user
+function saveBooks(books) {
+    localStorage.setItem(`books_${currentUser}`, JSON.stringify(books));
+}
+
+// Add new book
+function addBook() {
+    const name = prompt("Enter book name:");
+    if (!name) return;
+
+    const books = JSON.parse(localStorage.getItem(`books_${currentUser}`)) || [];
+    books.push({ name, pages: [] });
+    saveBooks(books);
     loadBooks();
-    pagesContainer.innerHTML = '';
+}
+
+// Delete book
+function deleteBook(index) {
+    const books = JSON.parse(localStorage.getItem(`books_${currentUser}`)) || [];
+    books.splice(index, 1);
+    saveBooks(books);
+    loadBooks();
+}
+
+// Add page to a book
+function addPage(bookIndex) {
+    const title = prompt("Enter page title:");
+    if (!title) return;
+
+    const books = JSON.parse(localStorage.getItem(`books_${currentUser}`)) || [];
+    books[bookIndex].pages.push({ title, content: "" });
+    saveBooks(books);
+    loadBooks();
+}
+
+// Delete page
+function deletePage(bookIndex, pageIndex) {
+    const books = JSON.parse(localStorage.getItem(`books_${currentUser}`)) || [];
+    books[bookIndex].pages.splice(pageIndex, 1);
+    saveBooks(books);
+    loadBooks();
+}
+
+// Event delegation for dynamic elements
+booksContainer.addEventListener("click", (e) => {
+    const bookEl = e.target.closest(".book-item");
+    if (!bookEl) return;
+    const bookIndex = parseInt(bookEl.dataset.index);
+
+    if (e.target.classList.contains("add-page")) {
+        addPage(bookIndex);
+    }
+
+    if (e.target.classList.contains("delete-book")) {
+        if (confirm("Delete this book?")) deleteBook(bookIndex);
+    }
+
+    if (e.target.classList.contains("delete-page")) {
+        const pageEl = e.target.closest(".page-item");
+        const pageIndex = parseInt(pageEl.dataset.index);
+        if (confirm("Delete this page?")) deletePage(bookIndex, pageIndex);
+    }
 });
 
-// Load pages for a book
-async function loadPages(book) {
-    pagesContainer.innerHTML = '';
-    const res = await fetch(`${apiBase}/books/${currentUser}/${book}`);
-    const pages = await res.json();
-    
-    pages.forEach((page, index) => {
-        const pageDiv = document.createElement('div');
-        pageDiv.className = 'page-box';
-        pageDiv.textContent = page.title;
-        pageDiv.addEventListener('click', () => loadPageContent(index, page));
-        pagesContainer.appendChild(pageDiv);
-    });
-}
-
-// Load single page content
-function loadPageContent(index, page) {
-    pageTitleInput.value = page.title;
-    pageContentInput.value = page.content;
-    addPageBtn.onclick = () => savePage(index);
-}
-
-// Save or update page
-async function savePage(index = null) {
-    if (!currentBook) return alert('Select a book first!');
-    const title = pageTitleInput.value;
-    const content = pageContentInput.value;
-    
-    const res = await fetch(`${apiBase}/books/${currentUser}/${currentBook}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content })
-    });
-    
-    if (res.ok) {
-        alert('Page saved!');
-        loadPages(currentBook);
-        pageTitleInput.value = '';
-        pageContentInput.value = '';
-    } else {
-        alert('Error saving page.');
-    }
-}
-
-// Initial load
+// Initialize
+document.getElementById("add-book").addEventListener("click", addBook);
 loadBooks();
