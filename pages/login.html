@@ -1,24 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Lumina AI</title>
-  <link rel="stylesheet" href="../css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Lumina AI</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/script.js" defer></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: url('../assets/images/login-bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            background: rgba(0,0,0,0.6);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 30px #ff00ff;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-container h1 {
+            color: #a020f0;
+            text-shadow: 0 0 10px #a020f0, 0 0 20px #ff00ff;
+            margin-bottom: 30px;
+        }
+
+        input[type="email"], input[type="password"] {
+            width: 90%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            margin: 10px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+            transition: 0.3s;
+        }
+
+        .btn-login {
+            background: #ff1493;
+            color: #fff;
+            box-shadow: 0 0 15px #ff1493;
+        }
+
+        .btn-signup {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .link-container {
+            margin-top: 20px;
+        }
+
+        .link-container a {
+            color: #1e90ff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+    </style>
 </head>
 <body>
-  <div class="background">
-    <img src="../assets/images/login-bg.jpg" alt="Cyberpunk Login Background">
-  </div>
-
-  <main class="auth-container">
-    <h2>Login</h2>
-    <form>
-      <input type="email" placeholder="Email" required>
-      <input type="password" placeholder="Password" required>
-      <button type="submit">Login</button>
-    </form>
-    <p>Don’t have an account? <a href="signup.html">Sign Up</a></p>
-  </main>
+    <div class="login-container">
+        <h1>Login</h1>
+        <form>
+            <input type="email" placeholder="Email" required><br>
+            <input type="password" placeholder="Password" required><br>
+            <button type="submit" class="btn btn-login">Login</button>
+        </form>
+        <div class="link-container">
+            <p>Don't have an account? 
+                <a href="signup.html">Sign Up</a>
+            </p>
+        </div>
+    </div>
 </body>
 </html>
