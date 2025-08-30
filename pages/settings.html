@@ -1,36 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings</title>
-    <link rel="stylesheet" href="../css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings - Lumina AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root {
+  --primary-neon: #9b59b6;
+  --secondary-neon: #8e44ad;
+  --bg-color-start: #0c0c1e;
+  --bg-color-end: #1c1c3a;
+  --text-light: #e0e0e0;
+  --card-bg: rgba(0,0,0,0.5);
+  --button-hover: #a64ca6;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, var(--bg-color-start), var(--bg-color-end));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.settings-container {
+  width: 90%;
+  max-width: 450px;
+  background: var(--card-bg);
+  backdrop-filter: blur(15px) saturate(180%);
+  border-radius: 25px;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3), 0 0 40px rgba(155, 89, 182, 0.2);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  color: var(--primary-neon);
+  text-shadow: 0 0 10px var(--primary-neon), 0 0 20px var(--secondary-neon);
+  font-size: 1.6rem;
+}
+
+.header a {
+  color: var(--primary-neon);
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.settings-section {
+  background: rgba(255,255,255,0.05);
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 15px;
+  color: var(--text-light);
+  backdrop-filter: blur(10px);
+}
+
+.settings-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: var(--primary-neon);
+}
+
+.action-button {
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(45deg, var(--primary-neon), var(--secondary-neon));
+  box-shadow: 0 0 10px var(--primary-neon), 0 0 20px var(--secondary-neon);
+  transition: all 0.3s ease-in-out;
+  margin-top: 10px;
+}
+
+.action-button:hover {
+  background: var(--button-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px var(--primary-neon), 0 0 30px var(--secondary-neon);
+}
+
+@media (max-width: 450px){
+  .settings-container { padding: 15px; }
+  .header h1 { font-size: 1.4rem; }
+}
+</style>
 </head>
 <body>
-    <header>
-        <h1>Settings</h1>
-        <nav>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="index.html">Home</a>
-            <a href="login.html">Logout</a>
-        </nav>
-    </header>
-    <main>
-        <section>
-            <h2>Account Settings</h2>
-            <form>
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" placeholder="Enter new username">
 
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" placeholder="Enter new email">
+<div class="settings-container">
+  <div class="header">
+    <h1>Lumina AI Settings</h1>
+    <a href="dashboard.html">Back</a>
+  </div>
 
-                <button type="submit">Save Changes</button>
-            </form>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2025 Infinite AI. All Rights Reserved.</p>
-    </footer>
+  <div class="settings-section">
+    <h2>Account Settings</h2>
+    <p>Change your email, password, or username here.</p>
+    <button class="action-button">Edit Account</button>
+  </div>
+
+  <div class="settings-section">
+    <h2>AI Preferences</h2>
+    <p>Set default AI model, conversation memory, and response style.</p>
+    <button class="action-button">Edit AI Preferences</button>
+  </div>
+
+  <div class="settings-section">
+    <h2>Theme & Appearance</h2>
+    <p>Customize color themes, dark mode, and layout.</p>
+    <button class="action-button">Change Theme</button>
+  </div>
+
+  <div class="settings-section">
+    <h2>Danger Zone</h2>
+    <button class="action-button">Delete Account</button>
+  </div>
+</div>
+
 </body>
 </html>
