@@ -1,1 +1,22 @@
-
+{
+  "name": "lumina-ai",
+  "version": "1.0.0",
+  "description": "AI chat application using multiple free APIs (HuggingFace, Finnhub, Alpha, FMP, Groq, NewsAPI)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.5.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
