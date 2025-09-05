@@ -1,44 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat AI</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <title>Fallensoul Chat</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="chat-ai">
-
-        <!-- Conversations Sidebar -->
-        <div class="conversations">
-            <a class="new-conversation" href="#"><i class="fas fa-plus"></i> New Chat</a>
-            <div class="list">
-                <!-- Existing conversations will appear here -->
-            </div>
-            <div class="footer">
-                <a href="#" class="close-sidebar"><i class="fas fa-times"></i> Close</a>
-            </div>
+  <div class="chat-ai">
+    <div class="sidebar">
+      <a href="#" class="open-sidebar" title="Open Sidebar"><i class="fa-solid fa-bars"></i></a>
+      <nav class="conversations">
+        <a class="new-conversation" href="#"><i class="fa-solid fa-plus"></i>New Conversation</a>
+        <div class="list"></div>
+        <div class="footer">
+          <a class="save" href="#" title="Save"><i class="fa-solid fa-floppy-disk"></i></a>
+          <a class="open-database" href="#"><i class="fa-regular fa-folder-open"></i></a>
+          <a class="settings" href="#"><i class="fa-solid fa-cog"></i></a>
+          <a class="close-sidebar" href="#" title="Close Sidebar"><i class="fa-solid fa-bars"></i></a>
         </div>
-
-        <!-- Chat Content -->
-        <div class="content">
-            <div class="messages">
-                <!-- Chat messages appear here -->
-            </div>
-
-            <!-- Message Input -->
-            <div class="message-form">
-                <input type="text" id="chat-input" placeholder="Type your message...">
-                <button id="send-button">Send</button>
-            </div>
-        </div>
-
+      </nav>
     </div>
 
-    <!-- Font Awesome icons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js" defer></script>
+    <div class="content">
+      <div class="welcome">
+        <h1>Fallensoul Chat</h1>
+        <p>Made with ❤️ by <strong>Fallensoul</strong></p>
+      </div>
 
-    <!-- Chat AI JS -->
-    <script src="js/ChatAI.js" defer></script>
+      <div class="messages"></div>
+
+      <div class="message-form">
+        <select id="api-select">
+          <option value="huggingface">Hugging Face</option>
+          <option value="alphavantage">Alpha Vantage</option>
+          <option value="fmp">Financial Modeling Prep</option>
+          <option value="finnhub">Finnhub</option>
+          <option value="groq">Groq</option>
+          <option value="newsapi">News API</option>
+        </select>
+        <input type="text" id="chat-input" placeholder="Type your message...">
+        <button id="send-button">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <script src="main.js"></script>
 </body>
 </html>
