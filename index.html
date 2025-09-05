@@ -1,42 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lumina AI Chat</title>
-  <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat AI</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="chat-ai">
+    <div class="chat-ai">
 
-    <!-- Conversations Sidebar -->
-    <div class="conversations">
-      <a class="new-conversation" href="#"><i class="fas fa-plus"></i> New Chat</a>
-      <div class="list">
-        <!-- Existing conversations appear here -->
-      </div>
-      <div class="footer">
-        <a href="#" class="close-sidebar"><i class="fas fa-times"></i> Close</a>
-      </div>
+        <!-- Conversations Sidebar -->
+        <div class="conversations">
+            <a class="new-conversation" href="#"><i class="fas fa-plus"></i> New Chat</a>
+            <div class="list">
+                <!-- Existing conversations will appear here -->
+            </div>
+            <div class="footer">
+                <a href="#" class="close-sidebar"><i class="fas fa-times"></i> Close</a>
+            </div>
+        </div>
+
+        <!-- Chat Content -->
+        <div class="content">
+            <div class="messages">
+                <!-- Chat messages appear here -->
+            </div>
+
+            <!-- Message Input -->
+            <div class="message-form">
+                <input type="text" id="chat-input" placeholder="Type your message...">
+                <button id="send-button">Send</button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Chat Content -->
-    <div class="content">
-      <div class="messages">
-        <!-- Messages will be appended here -->
-      </div>
+    <!-- Font Awesome icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js" defer></script>
 
-      <!-- Message Input -->
-      <div class="message-form">
-        <input type="text" id="chat-input" placeholder="Type your message...">
-        <button id="send-button">Send</button>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js" defer></script>
-  <script src="js/ChatAI.js" defer></script>
+    <!-- Chat AI JS -->
+    <script src="js/ChatAI.js" defer></script>
 </body>
 </html>
