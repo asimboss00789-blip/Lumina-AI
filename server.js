@@ -24,45 +24,19 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// API Key validation
-function validateApiKey(apiName, apiKey) {
-  if (!apiKey) {
-    console.error(`❌ ${apiName} API key is missing`);
-    return false;
-  }
-  
-  switch(apiName) {
-    case 'Alpha Vantage':
-      if (apiKey.length !== 16) console.warn(`⚠️ Alpha Vantage key should be 16 chars, got ${apiKey.length}`);
-      break;
-    case 'Groq':
-      if (!apiKey.startsWith('gsk_')) console.warn(`⚠️ Groq key should start with 'gsk_', got ${apiKey.substring(0, 4)}`);
-      break;
-    case 'Hugging Face':
-      if (!apiKey.startsWith('hf_')) console.warn(`⚠️ Hugging Face key should start with 'hf_', got ${apiKey.substring(0, 3)}`);
-      break;
-    case 'NewsAPI':
-      if (apiKey.length !== 32) console.warn(`⚠️ NewsAPI key should be 32 chars, got ${apiKey.length}`);
-      break;
-  }
-  
-  console.log(`✅ ${apiName} API key is present`);
-  return true;
-}
+// API response cache to avoid hitting limits
+const apiCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-// Validate all API keys on startup
-console.log('\n=== API KEY VALIDATION ===');
-const apiKeys = {
-  'Alpha Vantage': process.env.ALPHA_KEY,
-  'FMP': process.env.FMP_KEY,
-  'Finnhub': process.env.FINNHUB_KEY,
-  'Groq': process.env.GROQ_KEY,
-  'Hugging Face': process.env.HUGGINGFACE_KEY,
-  'NewsAPI': process.env.NEWSAPI_KEY
+// API status tracking
+const apiStatus = {
+  alpha: { available: true, lastError: null },
+  fmp: { available: true, lastError: null },
+  finnhub: { available: true, lastError: null },
+  groq: { available: true, lastError: null },
+  huggingface: { available: true, lastError: null },
+  newsapi: { available: true, lastError: null }
 };
-
-Object.entries(apiKeys).forEach(([name, key]) => validateApiKey(name, key));
-console.log('==========================\n');
 
 // Extract stock symbol from message
 function extractStockSymbol(message) {
@@ -95,184 +69,302 @@ function extractCryptoSymbol(message) {
   return null;
 }
 
-// API endpoint for chat - Now uses multiple APIs
+// Extract keywords for news search
+function extractKeywords(message) {
+  // Remove common words
+  const stopWords = new Set(['the', 'a', 'an', 'is', 'are', 'what', 'how', 'why', 
+                            'when', 'where', 'i', 'you', 'we', 'they', 'this', 
+                            'that', 'these', 'those', 'can', 'could', 'will', 'would']);
+  
+  return message
+    .toLowerCase()
+    .split(' ')
+    .filter(word => word.length > 3 && !stopWords.has(word))
+    .join(' ');
+}
+
+// API call with error handling and caching
+async function callAPI(apiName, callFunction, cacheKey = null) {
+  // Check if API is marked as unavailable
+  if (!apiStatus[apiName].available) {
+    console.log(`Skipping ${apiName} API (marked as unavailable)`);
+    return null;
+  }
+  
+  // Check cache
+  if (cacheKey && apiCache.has(cacheKey)) {
+    const cached = apiCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log(`Using cached response for ${apiName}`);
+      return cached.data;
+    }
+  }
+  
+  try {
+    const result = await callFunction();
+    
+    // If successful, reset API status
+    apiStatus[apiName].available = true;
+    apiStatus[apiName].lastError = null;
+    
+    // Cache the result
+    if (cacheKey) {
+      apiCache.set(cacheKey, {
+        data: result,
+        timestamp: Date.now()
+      });
+    }
+    
+    return result;
+  } catch (error) {
+    console.error(`${apiName} API error:`, error.message);
+    apiStatus[apiName].lastError = error.message;
+    
+    // Check if it's a rate limit error
+    if (error.response && error.response.status === 429) {
+      console.log(`${apiName} API rate limited. Marking as unavailable.`);
+      apiStatus[apiName].available = false;
+      
+      // Schedule reactivation after 1 hour
+      setTimeout(() => {
+        apiStatus[apiName].available = true;
+        console.log(`${apiName} API reactivated after rate limit cooldown`);
+      }, 60 * 60 * 1000);
+    }
+    
+    return null;
+  }
+}
+
+// API endpoint for chat
 app.post('/api/chat', async (req, res) => {
   const userMessage = req.body.message;
   console.log(`📨 Received message: "${userMessage}"`);
 
   try {
-    // Array to store all API responses
-    const apiResponses = [];
     const symbol = extractStockSymbol(userMessage);
     const cryptoSymbol = extractCryptoSymbol(userMessage);
-    const lowerMsg = userMessage.toLowerCase();
-
-    // Call all relevant APIs in parallel
-    const apiPromises = [];
-
+    const keywords = extractKeywords(userMessage);
+    
+    // Array to store all API responses
+    const apiResponses = [];
+    
+    // Call all relevant APIs
+    const apiCalls = [];
+    
     // 1. Alpha Vantage (for stocks)
     if (process.env.ALPHA_KEY && symbol) {
-      apiPromises.push(
-        axios.get(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${process.env.ALPHA_KEY}`, { timeout: 10000 })
-          .then(response => {
-            if (response.data['Global Quote'] && response.data['Global Quote']['05. price']) {
-              const price = response.data['Global Quote']['05. price'];
-              const change = response.data['Global Quote']['09. change'];
-              const changePercent = response.data['Global Quote']['10. change percent'];
-              apiResponses.push(`Alpha Vantage: The current price of ${symbol} is $${price} (${change}, ${changePercent}).`);
-            }
-          })
-          .catch(error => {
-            console.error('Alpha Vantage error:', error.message);
-          })
+      apiCalls.push(
+        callAPI('alpha', async () => {
+          const response = await axios.get(
+            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${process.env.ALPHA_KEY}`,
+            { timeout: 10000 }
+          );
+          
+          if (response.data['Global Quote'] && response.data['Global Quote']['05. price']) {
+            const price = response.data['Global Quote']['05. price'];
+            const change = response.data['Global Quote']['09. change'];
+            const changePercent = response.data['Global Quote']['10. change percent'];
+            return `Stock Price (Alpha Vantage): ${symbol} is currently at $${price} (${change}, ${changePercent}).`;
+          }
+          return null;
+        }, `alpha_${symbol}`)
       );
     }
-
+    
     // 2. Finnhub (for stocks and crypto)
     if (process.env.FINNHUB_KEY) {
+      // Stock quote
       if (symbol) {
-        apiPromises.push(
-          axios.get(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${process.env.FINNHUB_KEY}`, { timeout: 10000 })
-            .then(response => {
-              if (response.data.c) {
-                const price = response.data.c;
-                const change = response.data.d;
-                const changePercent = response.data.dp;
-                apiResponses.push(`Finnhub: The current price of ${symbol} is $${price} (${change}, ${changePercent}%).`);
-              }
-            })
-            .catch(error => {
-              console.error('Finnhub stock error:', error.message);
-            })
-        );
-      }
-
-      if (cryptoSymbol) {
-        apiPromises.push(
-          axios.get(`https://finnhub.io/api/v1/quote?symbol=${cryptoSymbol}&token=${process.env.FINNHUB_KEY}`, { timeout: 10000 })
-            .then(response => {
-              if (response.data.c) {
-                const price = response.data.c;
-                const change = response.data.d;
-                const changePercent = response.data.dp;
-                const cryptoName = cryptoSymbol.split(':')[0];
-                apiResponses.push(`Finnhub: The current price of ${cryptoName} is $${price} (${change}, ${changePercent}%).`);
-              }
-            })
-            .catch(error => {
-              console.error('Finnhub crypto error:', error.message);
-            })
-        );
-      }
-
-      // Finnhub news
-      apiPromises.push(
-        axios.get(`https://finnhub.io/api/v1/news?category=general&token=${process.env.FINNHUB_KEY}`, { timeout: 10000 })
-          .then(response => {
-            if (response.data && response.data.length > 0) {
-              const topArticle = response.data[0];
-              apiResponses.push(`Finnhub News: ${topArticle.headline}. Source: ${topArticle.source}`);
+        apiCalls.push(
+          callAPI('finnhub', async () => {
+            const response = await axios.get(
+              `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${process.env.FINNHUB_KEY}`,
+              { timeout: 10000 }
+            );
+            
+            if (response.data.c) {
+              const price = response.data.c;
+              const change = response.data.d;
+              const changePercent = response.data.dp;
+              return `Stock Quote (Finnhub): ${symbol} is trading at $${price} (change: ${change}, ${changePercent}%).`;
             }
-          })
-          .catch(error => {
-            console.error('Finnhub news error:', error.message);
-          })
+            return null;
+          }, `finnhub_stock_${symbol}`)
+        );
+      }
+      
+      // Crypto quote
+      if (cryptoSymbol) {
+        apiCalls.push(
+          callAPI('finnhub', async () => {
+            const response = await axios.get(
+              `https://finnhub.io/api/v1/quote?symbol=${cryptoSymbol}&token=${process.env.FINNHUB_KEY}`,
+              { timeout: 10000 }
+            );
+            
+            if (response.data.c) {
+              const price = response.data.c;
+              const change = response.data.d;
+              const changePercent = response.data.dp;
+              const cryptoName = cryptoSymbol.split(':')[0];
+              return `Crypto Price (Finnhub): ${cryptoName} is at $${price} (change: ${change}, ${changePercent}%).`;
+            }
+            return null;
+          }, `finnhub_crypto_${cryptoSymbol}`)
+        );
+      }
+      
+      // News
+      apiCalls.push(
+        callAPI('finnhub', async () => {
+          const response = await axios.get(
+            `https://finnhub.io/api/v1/news?category=general&token=${process.env.FINNHUB_KEY}`,
+            { timeout: 10000 }
+          );
+          
+          if (response.data && response.data.length > 0) {
+            const topArticle = response.data[0];
+            return `Financial News (Finnhub): ${topArticle.headline}.`;
+          }
+          return null;
+        }, 'finnhub_news', 30000) // Cache news for 30 seconds
       );
     }
-
+    
     // 3. FMP (for company profiles)
     if (process.env.FMP_KEY && symbol) {
-      apiPromises.push(
-        axios.get(`https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${process.env.FMP_KEY}`, { timeout: 10000 })
-          .then(response => {
-            if (response.data && response.data.length > 0) {
-              const company = response.data[0];
-              apiResponses.push(`FMP: ${company.companyName} (${symbol}) - Price: $${company.price}. ${company.description.substring(0, 100)}...`);
-            }
-          })
-          .catch(error => {
-            console.error('FMP error:', error.message);
-          })
+      apiCalls.push(
+        callAPI('fmp', async () => {
+          const response = await axios.get(
+            `https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${process.env.FMP_KEY}`,
+            { timeout: 10000 }
+          );
+          
+          if (response.data && response.data.length > 0) {
+            const company = response.data[0];
+            return `Company Profile (FMP): ${company.companyName} (${symbol}) - Price: $${company.price}.`;
+          }
+          return null;
+        }, `fmp_${symbol}`)
       );
     }
-
-    // 4. NewsAPI (for general news)
-    if (process.env.NEWSAPI_KEY) {
-      apiPromises.push(
-        axios.get(`https://newsapi.org/v2/top-headlines?country=us&apiKey=${process.env.NEWSAPI_KEY}`, { timeout: 10000 })
-          .then(response => {
-            if (response.data.articles && response.data.articles.length > 0) {
-              const topArticle = response.data.articles[0];
-              apiResponses.push(`NewsAPI: Top news - ${topArticle.title}. Source: ${topArticle.source.name}`);
-            }
-          })
-          .catch(error => {
-            console.error('NewsAPI error:', error.message);
-          })
-      );
-    }
-
-    // 5. Groq (for general AI response) - Using correct model
-    if (process.env.GROQ_KEY) {
-      apiPromises.push(
-        axios.post('https://api.groq.com/openai/v1/chat/completions', {
-          model: "mixtral-8x7b-32768", // Fixed model name
-          messages: [{ role: "user", content: userMessage }],
-          max_tokens: 1024
-        }, {
-          headers: {
-            'Authorization': `Bearer ${process.env.GROQ_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 10000
-        })
-          .then(response => {
-            apiResponses.push(`Groq AI: ${response.data.choices[0].message.content}`);
-          })
-          .catch(error => {
-            console.error('Groq error:', error.message);
-          })
-      );
-    }
-
-    // 6. Hugging Face (for alternative AI response)
-    if (process.env.HUGGINGFACE_KEY) {
-      apiPromises.push(
-        axios.post('https://api-inference.huggingface.co/models/google/flan-t5-xxl', {
-          inputs: userMessage
-        }, {
-          headers: {
-            'Authorization': `Bearer ${process.env.HUGGINGFACE_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 10000
-        })
-          .then(response => {
-            if (response.data && response.data[0] && response.data[0].generated_text) {
-              apiResponses.push(`Hugging Face: ${response.data[0].generated_text}`);
-            }
-          })
-          .catch(error => {
-            console.error('Hugging Face error:', error.message);
-          })
-      );
-    }
-
-    // Wait for all API calls to complete
-    await Promise.allSettled(apiPromises);
-
-    // Combine all responses into a single message
-    let combinedResponse = "I've gathered information from multiple sources:\n\n";
     
-    if (apiResponses.length > 0) {
-      apiResponses.forEach((response, index) => {
-        combinedResponse += `${index + 1}. ${response}\n\n`;
-      });
-    } else {
-      combinedResponse = "Sorry, I couldn't retrieve any information from the APIs. Please try again later.";
+    // 4. NewsAPI (for general news)
+    if (process.env.NEWSAPI_KEY && keywords) {
+      apiCalls.push(
+        callAPI('newsapi', async () => {
+          const response = await axios.get(
+            `https://newsapi.org/v2/everything?q=${encodeURIComponent(keywords)}&sortBy=relevancy&pageSize=3&apiKey=${process.env.NEWSAPI_KEY}`,
+            { timeout: 10000 }
+          );
+          
+          if (response.data.articles && response.data.articles.length > 0) {
+            const article = response.data.articles[0];
+            return `News (NewsAPI): ${article.title}.`;
+          }
+          return null;
+        }, `newsapi_${keywords}`, 30000) // Cache news for 30 seconds
+      );
     }
-
-    res.json({ response: combinedResponse });
+    
+    // 5. Groq (for AI analysis)
+    if (process.env.GROQ_KEY) {
+      apiCalls.push(
+        callAPI('groq', async () => {
+          // Prepare context from other APIs for Groq to synthesize
+          let context = "User asked: " + userMessage;
+          
+          // Get results from other APIs first to provide context
+          const otherResults = await Promise.all(apiCalls.slice(0, -1));
+          otherResults.forEach((result, index) => {
+            if (result) context += `\nSource ${index+1}: ${result}`;
+          });
+          
+          const response = await axios.post(
+            'https://api.groq.com/openai/v1/chat/completions',
+            {
+              model: "mixtral-8x7b-32768",
+              messages: [
+                {
+                  role: "system",
+                  content: "You are Lumina AI, an intelligent assistant that synthesizes information from multiple sources. Analyze the information provided and create a comprehensive, coherent response. If there are conflicting data points, note them and provide the most likely accurate information."
+                },
+                {
+                  role: "user",
+                  content: context
+                }
+              ],
+              max_tokens: 1024,
+              temperature: 0.7
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${process.env.GROQ_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              timeout: 15000
+            }
+          );
+          
+          return `AI Analysis: ${response.data.choices[0].message.content}`;
+        }, `groq_${userMessage}`, 60000) // Cache AI responses for 1 minute
+      );
+    }
+    
+    // 6. Hugging Face (for alternative AI perspective)
+    if (process.env.HUGGINGFACE_KEY) {
+      apiCalls.push(
+        callAPI('huggingface', async () => {
+          const response = await axios.post(
+            'https://api-inference.huggingface.co/models/google/flan-t5-xxl',
+            {
+              inputs: userMessage
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${process.env.HUGGINGFACE_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              timeout: 10000
+            }
+          );
+          
+          if (response.data && response.data[0] && response.data[0].generated_text) {
+            return `Alternative Perspective: ${response.data[0].generated_text}`;
+          }
+          return null;
+        }, `hf_${userMessage}`)
+      );
+    }
+    
+    // Execute all API calls
+    const results = await Promise.all(apiCalls);
+    
+    // Filter out null responses
+    const validResults = results.filter(result => result !== null);
+    
+    // Generate final response based on available data
+    let finalResponse;
+    
+    if (validResults.length === 0) {
+      finalResponse = "I apologize, but I'm currently unable to access my information sources. Please try again later.";
+    } else if (validResults.length === 1) {
+      finalResponse = validResults[0];
+    } else {
+      // Use Groq to synthesize responses if available, otherwise combine manually
+      const groqResult = validResults.find(r => r.startsWith('AI Analysis:'));
+      
+      if (groqResult) {
+        finalResponse = groqResult.replace('AI Analysis: ', '');
+      } else {
+        finalResponse = "I've gathered information from multiple sources:\n\n" +
+          validResults.map((result, index) => `${index + 1}. ${result}`).join('\n\n');
+      }
+    }
+    
+    res.json({ response: finalResponse });
+    
   } catch (error) {
     console.error('Overall API error:', error.message);
     res.status(500).json({ error: 'An error occurred while processing your request.' });
@@ -291,8 +383,23 @@ app.get('/health', (req, res) => {
       groq: !!process.env.GROQ_KEY,
       huggingface: !!process.env.HUGGINGFACE_KEY,
       newsapi: !!process.env.NEWSAPI_KEY
-    }
+    },
+    api_status: apiStatus
   });
+});
+
+// API status endpoint
+app.get('/api/status', (req, res) => {
+  res.json(apiStatus);
+});
+
+// Reset API status endpoint (for testing)
+app.post('/api/reset-status', (req, res) => {
+  Object.keys(apiStatus).forEach(api => {
+    apiStatus[api].available = true;
+    apiStatus[api].lastError = null;
+  });
+  res.json({ message: 'API status reset', status: apiStatus });
 });
 
 // Start the server
