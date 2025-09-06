@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aether AI - Your Intelligent Agent</title>
+    <title>Lumina AI - Your Intelligent Agent</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for microphone icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -411,11 +411,8 @@
     <div class="aether-ui-container">
         <!-- Header -->
         <div class="header">
-            <h1>Aether AI</h1>
-            <div class="header-actions">
-                <button class="action-button" id="about-button">About Agent</button>
-                <button class="action-button" id="github-button">My GitHub</button>
-            </div>
+            <h1>Lumina AI</h1>
+            <!-- Removed header buttons -->
         </div>
 
         <!-- Chat History -->
@@ -423,7 +420,7 @@
             <!-- Initial Message -->
             <div class="message-container agent">
                 <div class="message-avatar">AI</div>
-                <div class="message-bubble">Hello! I am Aether AI, your intelligent assistant. How can I help you today?</div>
+                <div class="message-bubble">Hello! I am Lumina AI, your intelligent assistant. How can I help you today?</div>
             </div>
         </div>
 
@@ -439,25 +436,8 @@
         </div>
     </div>
 
-    <!-- About Agent Modal -->
-    <div class="modal-overlay" id="about-modal">
-        <div class="modal-content">
-            <h2>About Aether AI Agent</h2>
-            <p>I am Aether AI, a simulated intelligent agent designed to assist you. I can process text inputs and provide responses. My core purpose is to explore interactive AI interfaces and user experiences.</p>
-            <p>This UI is built with HTML, CSS (Tailwind CSS for utilities, custom CSS for effects), and JavaScript, showcasing a modern, minimalist design inspired by iOS and subtle 3D aesthetics.</p>
-            <button class="modal-close-button">Close</button>
-        </div>
-    </div>
-
-    <!-- My GitHub Modal -->
-    <div class="modal-overlay" id="github-modal">
-        <div class="modal-content">
-            <h2>My GitHub Profile</h2>
-            <p>Explore more of my work and contributions on GitHub:</p>
-            <p><a href="https://github.com/mohdnadim1" target="_blank">github.com/mohdnadim1</a></p>
-            <button class="modal-close-button">Close</button>
-        </div>
-    </div>
+    <!-- Removed About Agent Modal -->
+    <!-- Removed My GitHub Modal -->
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -466,10 +446,6 @@
             const sendButton = document.getElementById('send-button');
             const microphoneButton = document.getElementById('microphone-button');
             const particleBg = document.getElementById('particle-bg');
-            const aboutButton = document.getElementById('about-button');
-            const githubButton = document.getElementById('github-button');
-            const aboutModal = document.getElementById('about-modal');
-            const githubModal = document.getElementById('github-modal');
 
             // --- Particle Background Generation ---
             function createParticle() {
@@ -571,7 +547,7 @@
                 } else if (userMessage.includes("how are you")) {
                     return "As an AI, I don't experience feelings, but I'm operating optimally. How are you?";
                 } else if (userMessage.includes("your name")) {
-                    return "I am Aether AI, your intelligent agent.";
+                    return "I am Lumina AI, your intelligent agent.";
                 } else if (userMessage.includes("github")) {
                     return "You can find more about my developer on GitHub: https://github.com/mohnadim1";
                 } else if (userMessage.includes("time")) {
@@ -675,33 +651,7 @@
                 userInput.placeholder = "Voice input not supported. Type your message...";
             }
 
-            // --- Modals Functionality ---
-            function openModal(modal) {
-                modal.classList.add('active');
-            }
-
-            function closeModal(modal) {
-                modal.classList.remove('active');
-            }
-
-            aboutButton.addEventListener('click', () => openModal(aboutModal));
-            githubButton.addEventListener('click', () => openModal(githubModal));
-
-            // Close buttons for modals
-            aboutModal.querySelector('.modal-close-button').addEventListener('click', () => closeModal(aboutModal));
-            githubModal.querySelector('.modal-close-button').addEventListener('click', () => closeModal(githubModal));
-
-            // Close modal on overlay click
-            aboutModal.addEventListener('click', (e) => {
-                if (e.target === aboutModal) {
-                    closeModal(aboutModal);
-                }
-            });
-            githubModal.addEventListener('click', (e) => {
-                if (e.target === githubModal) {
-                    closeModal(githubModal);
-                }
-            });
+            // Removed modal functionality
         });
     </script>
 </body>
