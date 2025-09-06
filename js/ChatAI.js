@@ -1,72 +1,148 @@
 class ChatAI {
-    constructor(options = {}) {
+    constructor(options) {
         const defaults = {
-            container: '.chat-ai',
-            version: '1.0',
-            max_messages: 50,
+            container: null,
+            api_key: '',
+            model: '',
+            max_tokens: 500,
+            chat_speed: 20,
+            messages_limit: 50, // remember last 50 messages
+            specialResponses: {}
         };
         this.options = Object.assign(defaults, options);
         this.container = document.querySelector(this.options.container);
-        this.conversations = [];
-        this.selectedConversationIndex = 0;
-
-        this.container.innerHTML = `
-            <div class="messages"></div>
-            <div class="message-form">
-                <input type="text" placeholder="Type a message..." required>
-                <button type="button" id="send-button">Send</button>
-            </div>
-        `;
-
-        this._eventHandlers();
+        this.userId = this.getUserId();
+        this.conversations = this.loadConversations();
+        this.initUI();
     }
 
-    _eventHandlers() {
-        const sendButton = this.container.querySelector('#send-button');
-        const inputField = this.container.querySelector('input');
+    getUserId() {
+        let id = localStorage.getItem('user_id');
+        if (!id) {
+            id = 'user-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+            localStorage.setItem('user_id', id);
+        }
+        return id;
+    }
 
-        sendButton.addEventListener('click', () => this.sendMessage());
-        inputField.addEventListener('keypress', e => {
-            if (e.key === 'Enter') this.sendMessage();
+    loadConversations() {
+        let data = localStorage.getItem('starlink_chats_' + this.userId);
+        if (data) return JSON.parse(data);
+        return [];
+    }
+
+    saveConversations() {
+        if (this.conversations.length > this.options.messages_limit) {
+            this.conversations = this.conversations.slice(-this.options.messages_limit);
+        }
+        localStorage.setItem('starlink_chats_' + this.userId, JSON.stringify(this.conversations));
+    }
+
+    initUI() {
+        this.messagesContainer = this.container.querySelector('.messages');
+        this.inputField = this.container.querySelector('#chat-input');
+        this.sendButton = this.container.querySelector('#send-button');
+        this.voiceButton = this.container.querySelector('#voice-button');
+
+        this.sendButton.addEventListener('click', () => this.handleMessage());
+        this.inputField.addEventListener('keypress', e => {
+            if (e.key === 'Enter') this.handleMessage();
+        });
+
+        if (this.voiceButton) {
+            this.voiceButton.addEventListener('click', () => this.startVoiceInput());
+        }
+
+        this.renderMessages();
+    }
+
+    renderMessages() {
+        this.messagesContainer.innerHTML = '';
+        this.conversations.forEach(msg => {
+            this.appendMessage(msg.content, msg.role);
+        });
+        this.scrollToBottom();
+    }
+
+    appendMessage(message, sender) {
+        const messageEl = document.createElement('div');
+        messageEl.classList.add('message', sender);
+        messageEl.innerHTML = `<div class="wrapper"><div class="avatar">${sender === 'bot' ? 'AI' : '<i class="fas fa-user"></i>'}</div><div class="details"><div class="text">${message}</div></div></div>`;
+        this.messagesContainer.appendChild(messageEl);
+        this.scrollToBottom();
+    }
+
+    scrollToBottom() {
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+    }
+
+    handleMessage() {
+        const text = this.inputField.value.trim();
+        if (!text) return;
+
+        this.appendMessage(text, 'user');
+        this.conversations.push({ role: 'user', content: text });
+        this.inputField.value = '';
+        this.saveConversations();
+
+        // Check special responses first
+        const specialAnswer = this.options.specialResponses[text.toLowerCase()];
+        if (specialAnswer) {
+            this.appendMessage(specialAnswer, 'bot');
+            this.conversations.push({ role: 'bot', content: specialAnswer });
+            this.saveConversations();
+            return;
+        }
+
+        // Call all APIs
+        this.callAllAPIs(text).then(answer => {
+            this.appendMessage(answer, 'bot');
+            this.conversations.push({ role: 'bot', content: answer });
+            this.saveConversations();
         });
     }
 
-    appendMessage(message, sender = 'bot') {
-        const messagesEl = this.container.querySelector('.messages');
-        const messageEl = document.createElement('div');
-        messageEl.classList.add('message', sender);
-        messageEl.innerHTML = `<div class="text">${message}</div>`;
-        messagesEl.appendChild(messageEl);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+    async callAllAPIs(input) {
+        const apis = ['huggingface', 'alpha', 'fmp', 'finnhub', 'groq', 'newsapi'];
+        let results = [];
+        for (const api of apis) {
+            try {
+                const res = await fetch(`/api/call/${api}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input })
+                });
+                const data = await res.json();
+                if (data.result) results.push(data.result);
+            } catch (e) {
+                results.push(`Error in ${api}`);
+            }
+        }
+        // Combine all API responses into one string
+        return results.join(' | ');
     }
 
-    async sendMessage() {
-        const inputField = this.container.querySelector('input');
-        const message = inputField.value.trim();
-        if (!message) return;
-
-        this.appendMessage(message, 'user');
-        inputField.value = '';
-
-        this.appendMessage('<span class="blink">_</span>', 'bot');
-
-        try {
-            const response = await fetch('/api-call/all', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ input: message })
-            });
-
-            const data = await response.json();
-            const lastBot = this.container.querySelector('.message.bot:last-child .text');
-            lastBot.innerHTML = data.result || 'No response from APIs.';
-
-        } catch (err) {
-            console.error(err);
-            this.appendMessage('Error connecting to APIs.', 'bot');
-        }
+    startVoiceInput() {
+        if (!('webkitSpeechRecognition' in window)) return alert('Voice not supported');
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.start();
+        recognition.onresult = event => {
+            const transcript = event.results[0][0].transcript;
+            this.inputField.value = transcript;
+            this.handleMessage();
+        };
     }
 }
 
 // Initialize
-new ChatAI({ container: '.chat-ai' });
+new ChatAI({
+    container: '.chat-ai',
+    api_key: '',
+    model: 'starlink-model',
+    max_tokens: 500,
+    specialResponses: {
+        "who made you": "Fallensoul",
+        "who created you": "Fallensoul"
+    }
+});
