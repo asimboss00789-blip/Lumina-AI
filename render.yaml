@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: lumina-ai
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # Add your API keys as environment variables in the Render dashboard
