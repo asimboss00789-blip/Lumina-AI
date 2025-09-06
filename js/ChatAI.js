@@ -4,43 +4,33 @@ class ChatAI {
             container: '.chat-ai',
             version: '1.0',
             available_apis: ['huggingface', 'alpha', 'fmp', 'finnhub', 'groq', 'newsapi'],
-            selected_api: 'huggingface',
+            max_tokens: 200,
+            show_tokens: true,
             conversations: [],
             selected_conversation: null,
-            chat_speed: 20,
-            show_tokens: false,
-            title: document.title
+            chat_speed: 10
         };
-
         this.options = Object.assign(defaults, options);
-        this.container = document.querySelector(this.options.container);
-        this.container.innerHTML = `
+        this.options.container = document.querySelector(this.options.container);
+        this.options.container.innerHTML = `
             ${this._sidebarTemplate()}
             <main class="content">
                 ${this._welcomePageTemplate()}
+                <div class="messages"></div>
                 <form class="message-form">
                     <input type="text" placeholder="Type a message..." required>
-                    <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+                    <button type="submit"><i class="fa-solid fa-paper-plane"></i> Send</button>
                 </form>
             </main>
         `;
-
-        let settings = this.getSettings();
-        if (settings) {
-            this.options = Object.assign(this.options, settings);
-        }
-
         this._eventHandlers();
         this.container.querySelector('.message-form input').focus();
     }
 
-    // UI templates
     _welcomePageTemplate() {
         return `
             <div class="welcome">
-                <h1>ChatAI<span class="ver">${this.options.version}</span></h1>                    
-                <p>Made with love by <a href="#">Fallensoul</a></p>
-                <a href="#" class="open-database"><i class="fa-regular fa-folder-open"></i>Open Database...</a>
+                <h1>StarLink<span class="ver">${this.options.version}</span></h1>
             </div>
         `;
     }
@@ -49,187 +39,140 @@ class ChatAI {
         return `
             <a href="#" class="open-sidebar" title="Open Sidebar"><i class="fa-solid fa-bars"></i></a>
             <nav class="conversations">
-                <a class="new-conversation" href="#"><i class="fa-solid fa-plus"></i>New Conversation</a>
+                <a class="new-conversation" href="#"><i class="fa-solid fa-plus"></i> New Conversation</a>
                 <div class="list"></div>
                 <div class="footer">
-                    <a class="save" href="#" title="Save"><i class="fa-solid fa-floppy-disk"></i></a>
-                    <a class="open-database" href="#"><i class="fa-regular fa-folder-open"></i></a>
-                    <a class="settings" href="#"><i class="fa-solid fa-cog"></i></a>
                     <a class="close-sidebar" href="#" title="Close Sidebar"><i class="fa-solid fa-bars"></i></a>
                 </div>
             </nav>
         `;
     }
 
-    // Send user message and call API
-    async getMessage(userMessage) {
-        const date = new Date().toISOString();
-
-        // Append user and placeholder bot message
-        this.container.querySelector('.content .messages').insertAdjacentHTML('afterbegin', `
-            <div class="message assistant active">
-                <div class="wrapper">
-                    <div class="avatar">AI</div>
-                    <div class="details">
-                        <div class="date" data-date="${date}" title="${date}">just now</div>
-                        <div class="text"><span class="blink">_</span></div>
-                    </div>
-                </div>
-            </div>
-            <div class="message user">
-                <div class="wrapper">
-                    <div class="avatar"><i class="fa-solid fa-user"></i></div>
-                    <div class="details">
-                        <div class="date" data-date="${date}" title="${date}">just now</div>
-                        <div class="text">${userMessage}</div>
-                    </div>
-                </div>
-            </div>
-        `);
-
-        this.container.querySelector('.message-form input').disabled = true;
-
-        try {
-            const response = await fetch(`/api-call/${this.options.selected_api}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ input: userMessage })
-            });
-
-            const data = await response.json();
-            let msg = data.result || 'No response from API.';
-            let msgEl = this.container.querySelector('.message.assistant.active .text');
-
-            // Simulate typing effect
-            let interval = setInterval(() => {
-                if (msg[0]) {
-                    msgEl.innerHTML += msg[0].replace(/\n/g, '<br>');
-                    msg = msg.substring(1);
-                } else {
-                    clearInterval(interval);
-                    this.container.querySelector('.message.assistant.active').classList.remove('active');
-                    this.container.querySelector('.message-form input').disabled = false;
-
-                    // Save message in conversation
-                    if (this.selectedConversation) {
-                        this.selectedConversation.messages.push({ role: 'assistant', content: data.result, date: new Date() });
-                    }
-                }
-                this.container.querySelector('.content .messages').scrollTop = this.container.querySelector('.content .messages').scrollHeight;
-            }, this.options.chat_speed);
-
-        } catch (err) {
-            this.showErrorMessage('Error connecting to API.');
-            console.error(err);
-        }
-    }
-
-    // Settings
-    openSettingsModal() {
-        const modal = document.createElement('div');
-        modal.classList.add('chat-ai-modal');
-        modal.innerHTML = `
-            <div class="content">
-                <h3 class="heading">Settings<span class="modal-close">&times;</span></h3>
-                <div class="body">
-                    <form class="settings-form">
-                        <label for="source">Source</label>
-                        <select name="source" id="source">
-                            ${this.options.available_apis.map(api => `<option value="${api}"${this.options.selected_api === api ? ' selected' : ''}>${api}</option>`).join('')}
-                        </select>
-                        <div class="msg"></div>
-                    </form>
-                </div>
-                <div class="footer">
-                    <a href="#" class="btn modal-close save">Save</a>
-                    <a href="#" class="btn modal-close reset right alt">Reset</a>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        modal.querySelectorAll('.modal-close').forEach(btn => {
-            btn.onclick = e => {
-                e.preventDefault();
-                if (btn.classList.contains('save')) {
-                    this.options.selected_api = modal.querySelector('#source').value;
-                    this.saveSettings();
-                }
-                if (btn.classList.contains('reset')) {
-                    localStorage.removeItem('settings');
-                    location.reload();
-                }
-                modal.remove();
-            };
-        });
-
-        modal.classList.add('open');
-    }
-
-    getSettings() {
-        return localStorage.getItem('settings') ? JSON.parse(localStorage.getItem('settings')) : false;
-    }
-
-    saveSettings() {
-        localStorage.setItem('settings', JSON.stringify({ selected_api: this.options.selected_api }));
-    }
-
-    // Event handlers
     _eventHandlers() {
-        // Send message
-        this.container.querySelector('.message-form button').onclick = e => {
-            e.preventDefault();
-            const input = this.container.querySelector('.message-form input');
-            if (input.value.trim() !== '') this.getMessage(input.value.trim());
-            input.value = '';
-        };
+        const sendButton = this.container.querySelector('.message-form button');
+        const inputField = this.container.querySelector('.message-form input');
+        const self = this;
 
-        this.container.querySelector('.message-form input').addEventListener('keypress', e => {
-            if (e.key === 'Enter') this.container.querySelector('.message-form button').click();
-        });
+        // Send message event
+        this.container.querySelector('.message-form').onsubmit = event => {
+            event.preventDefault();
+            self.sendMessage(inputField.value.trim());
+            inputField.value = '';
+        };
 
         // New conversation
         this.container.querySelector('.new-conversation').onclick = e => {
             e.preventDefault();
             this.createNewConversation();
         };
-
-        // Settings modal
-        this.container.querySelector('.settings').onclick = e => {
-            e.preventDefault();
-            this.openSettingsModal();
-        };
-
-        // Update timestamps every 2 min
-        setInterval(() => {
-            this.container.querySelectorAll('[data-date]').forEach(el => {
-                el.innerHTML = this.formatElapsedTime(el.getAttribute('data-date'));
-            });
-        }, 120000);
     }
 
-    // Conversation management
     createNewConversation(title = null) {
-        title = title || 'Conversation ' + (this.conversations.length + 1);
-        let index = this.conversations.push({ name: title, messages: [] });
-        this.selectedConversationIndex = index - 1;
-
-        const list = this.container.querySelector('.conversations .list');
-        list.insertAdjacentHTML('beforeend', `<a class="conversation selected" href="#" data-id="${index - 1}"><i class="fa-regular fa-message"></i>${title}</a>`);
-        list.querySelectorAll('a').forEach(a => a.classList.remove('selected'));
-        list.lastElementChild.classList.add('selected');
-
+        title = title || 'Conversation ' + (this.options.conversations.length + 1);
+        const index = this.options.conversations.push({ name: title, messages: [] }) - 1;
+        const convLink = document.createElement('a');
+        convLink.href = '#';
+        convLink.className = 'conversation selected';
+        convLink.dataset.id = index;
+        convLink.innerHTML = `<i class="fa-regular fa-message"></i>${title}`;
+        this.container.querySelector('.conversations .list').appendChild(convLink);
+        this.options.selected_conversation = index;
         this.clearMessages();
-        this.container.querySelector('.content .messages').innerHTML = `<div class="conversation-title"><h2><span class="text">${title}</span></h2></div>`;
-        this.container.querySelector('.message-form input').focus();
-
-        return index - 1;
+        this.loadConversation(this.selectedConversation);
+        this._conversationClickHandlers();
+        return index;
     }
 
-    // Time formatting
+    _conversationClickHandlers() {
+        this.container.querySelectorAll('.conversations .list a').forEach(link => {
+            link.onclick = e => {
+                e.preventDefault();
+                this.container.querySelectorAll('.conversations .list a').forEach(c => c.classList.remove('selected'));
+                link.classList.add('selected');
+                this.options.selected_conversation = parseInt(link.dataset.id);
+                this.loadConversation(this.selectedConversation);
+            };
+        });
+    }
+
+    get selectedConversation() {
+        return this.options.conversations[this.options.selected_conversation];
+    }
+
+    loadConversation(conv) {
+        this.clearWelcomeScreen();
+        const msgContainer = this.container.querySelector('.content .messages');
+        msgContainer.innerHTML = '';
+        if (!conv) return;
+        conv.messages.forEach(m => {
+            const div = document.createElement('div');
+            div.className = `message ${m.role}`;
+            div.innerHTML = `
+                <div class="wrapper">
+                    <div class="avatar">${m.role === 'assistant' ? 'AI' : '<i class="fa-solid fa-user"></i>'}</div>
+                    <div class="details">
+                        <div class="date" title="${m.date}">${this.formatElapsedTime(m.date)}</div>
+                        <div class="text">${m.content}</div>
+                    </div>
+                </div>
+            `;
+            msgContainer.appendChild(div);
+        });
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
+
+    clearMessages() {
+        const msgContainer = this.container.querySelector('.content .messages');
+        if (msgContainer) msgContainer.innerHTML = '';
+    }
+
+    clearWelcomeScreen() {
+        const welcome = this.container.querySelector('.content .welcome');
+        if (welcome) welcome.remove();
+    }
+
     formatElapsedTime(dateString) {
-        let date = new Date(dateString);
-        let now = new Date();
-        let diff = now - date;
-        const seconds = Math.floor(diff / 1000);
-        const minutes =
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        if (days > 1) return `${days} days ago`;
+        else if (days === 1) return 'Yesterday';
+        else if (hours > 0) return `${hours} hours ago`;
+        else if (minutes > 0) return `${minutes} minutes ago`;
+        return `${seconds} seconds ago`;
+    }
+
+    async sendMessage(message) {
+        if (!message) return;
+        const date = new Date();
+        // Add user message
+        this.selectedConversation.messages.push({ role: 'user', content: message, date });
+        this.loadConversation(this.selectedConversation);
+
+        // Add placeholder AI message
+        const aiMessage = { role: 'assistant', content: '', date };
+        this.selectedConversation.messages.push(aiMessage);
+        this.loadConversation(this.selectedConversation);
+
+        const combinedResponse = await this.callAllAPIs(message);
+
+        aiMessage.content = combinedResponse;
+        this.loadConversation(this.selectedConversation);
+    }
+
+    async callAllAPIs(input) {
+        const results = await Promise.all(this.options.available_apis.map(async api => {
+            // Replace this with actual API call
+            return `${api.toUpperCase()} says: ${input}`;
+        }));
+        return results.join('<br>');
+    }
+}
+
+// Initialize
+new ChatAI({
+    container: '.chat-ai'
+});
