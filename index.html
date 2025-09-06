@@ -10,13 +10,21 @@
 </head>
 <body>
     <div class="chat-ai">
-        <!-- Chat messages will be injected here by ChatAI.js -->
+        <div class="messages"></div>
+        <form class="message-form">
+            <input type="text" id="chat-input" placeholder="Type your message...">
+            <button id="send-button" type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+        </form>
     </div>
 
-    <!-- Optional header -->
-    <header class="chat-header">
-        <h1>StarLink</h1>
-        <span class="subtext">Made with love by Fallensoul</span>
-    </header>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chat = new ChatAI({
+                container: '.chat-ai',
+                api_key: '', // Optional: can be left blank for now
+                model: 'multi-api' // placeholder for multiple APIs
+            });
+        });
+    </script>
 </body>
 </html>
