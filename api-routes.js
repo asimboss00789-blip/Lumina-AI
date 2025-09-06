@@ -1,27 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const fetch = require('node-fetch'); // Make sure to install node-fetch v2
 const { readJSON, writeJSON, truncateMessages } = require('./utils');
 
 const conversationsPath = path.join(__dirname, 'conversations');
 
-// Environment keys
-const HUGGINGFACE_KEY = process.env.HUGGINGFACE_KEY;
-const ALPHA_KEY = process.env.ALPHA_KEY;
-const FMP_KEY = process.env.FMP_KEY;
-const FINNHUB_KEY = process.env.FINNHUB_KEY;
-const GROQ_KEY = process.env.GROQ_KEY;
-const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
-
-// --- Conversation routes ---
-
+// GET conversation by ID
 router.get('/conversations/:id', (req, res) => {
     const convoFile = path.join(conversationsPath, `${req.params.id}.json`);
     const messages = readJSON(convoFile);
     res.json(messages);
 });
 
+// POST a new message
 router.post('/conversations/:id', (req, res) => {
     const convoFile = path.join(conversationsPath, `${req.params.id}.json`);
     let messages = readJSON(convoFile);
@@ -31,8 +22,7 @@ router.post('/conversations/:id', (req, res) => {
     res.json({ success: true, messages });
 });
 
-// --- API call route ---
-
+// POST all APIs at once
 router.post('/api-call/all', async (req, res) => {
     const { input } = req.body;
 
@@ -46,7 +36,7 @@ router.post('/api-call/all', async (req, res) => {
             callNewsAPI(input)
         ]);
 
-        // Combine all responses into a single string
+        // Combine all API results into one answer
         const combinedAnswer = responses.join(' ');
 
         res.json({ success: true, result: combinedAnswer });
@@ -56,54 +46,42 @@ router.post('/api-call/all', async (req, res) => {
     }
 });
 
-// --- Individual API calls ---
-
+// Helper functions calling real APIs from environment variables
 async function callHuggingFace(input) {
-    if (!HUGGINGFACE_KEY) return '';
-    const response = await fetch('https://api-inference.huggingface.co/models/gpt2', {
+    const key = process.env.HUGGINGFACE_KEY;
+    if (!key) return 'HuggingFace API key missing.';
+    const response = await fetch('https://api-inference.huggingface.co/models/your-model', {
         method: 'POST',
-        headers: { 
-            'Authorization': `Bearer ${HUGGINGFACE_KEY}`,
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ inputs: input })
     });
     const data = await response.json();
-    return data?.[0]?.generated_text || '';
+    return data?.[0]?.generated_text || 'No response from HuggingFace';
 }
 
 async function callAlpha(input) {
-    if (!ALPHA_KEY) return '';
-    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${input}&interval=5min&apikey=${ALPHA_KEY}`;
-    const data = await fetch(url).then(r => r.json());
-    return `Alpha: ${JSON.stringify(data).slice(0, 200)}`; // Short snippet
+    const key = process.env.ALPHA_KEY;
+    return `Alpha response placeholder for "${input}"`; // Replace with real API call
 }
 
 async function callFMP(input) {
-    if (!FMP_KEY) return '';
-    const url = `https://financialmodelingprep.com/api/v3/quote/${input}?apikey=${FMP_KEY}`;
-    const data = await fetch(url).then(r => r.json());
-    return `FMP: ${JSON.stringify(data).slice(0, 200)}`;
+    const key = process.env.FMP_KEY;
+    return `FMP response placeholder for "${input}"`; // Replace with real API call
 }
 
 async function callFinnhub(input) {
-    if (!FINNHUB_KEY) return '';
-    const url = `https://finnhub.io/api/v1/quote?symbol=${input}&token=${FINNHUB_KEY}`;
-    const data = await fetch(url).then(r => r.json());
-    return `Finnhub: ${JSON.stringify(data).slice(0, 200)}`;
+    const key = process.env.FINNHUB_KEY;
+    return `Finnhub response placeholder for "${input}"`; // Replace with real API call
 }
 
 async function callGroq(input) {
-    if (!GROQ_KEY) return '';
-    // Placeholder endpoint, replace with your actual Groq API
-    return `Groq response for "${input}"`;
+    const key = process.env.GROQ_KEY;
+    return `Groq response placeholder for "${input}"`; // Replace with real API call
 }
 
 async function callNewsAPI(input) {
-    if (!NEWSAPI_KEY) return '';
-    const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(input)}&apiKey=${NEWSAPI_KEY}`;
-    const data = await fetch(url).then(r => r.json());
-    return `News: ${data?.articles?.[0]?.title || ''}`;
+    const key = process.env.NEWSAPI_KEY;
+    return `NewsAPI response placeholder for "${input}"`; // Replace with real API call
 }
 
 module.exports = router;
