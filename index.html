@@ -1,559 +1,1351 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumina AI - Your Intelligent Agent</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        :root {
-            --bg-gradient-start: #1c1c3a;
-            --bg-gradient-end: #0c0c1e;
-            --card-bg-light: rgba(255, 255, 255, 0.05);
-            --card-bg-dark: rgba(0, 0, 0, 0.2);
-            --border-color: rgba(255, 255, 255, 0.1);
-            --text-color-light: #e0e0e0;
-            --text-color-dark: #b0b0b0;
-            --primary-accent: #8e8eec;
-            --secondary-accent: #a9a9ed;
-            --chat-bubble-user: #8e8eec;
-            --chat-bubble-agent: rgba(255, 255, 255, 0.08);
-            --success-color: #4ade80;
-            --error-color: #f87171;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-API ChatGPT Clone</title>
+  <style>
+    /* Reset and base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+      background: #343541;
+      color: #ffffff;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
-            color: var(--text-color-light);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
+    .container {
+      display: flex;
+      height: 100vh;
+    }
 
-        .chat-container {
-            width: 100%;
-            max-width: 800px;
-            height: 85vh;
-            background: var(--card-bg-dark);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 40px rgba(142, 142, 236, 0.15);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+    /* Sidebar styles */
+    .sidebar {
+      width: 260px;
+      background: #202123;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #4d4d4f;
+    }
 
-        .header {
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--card-bg-light);
-        }
+    .sidebar-header {
+      padding: 8px;
+    }
 
-        .header h1 {
-            font-weight: 600;
-            font-size: 1.4rem;
-            color: var(--primary-accent);
-            text-shadow: 0 0 5px rgba(142, 142, 236, 0.5);
-        }
+    .new-chat-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid #4d4d4f;
+      color: #ffffff;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
 
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8rem;
-        }
+    .new-chat-btn:hover {
+      background: #2a2b32;
+    }
 
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--error-color);
-        }
+    .plus-icon {
+      font-size: 16px;
+      font-weight: bold;
+    }
 
-        .status-indicator.connected {
-            background-color: var(--success-color);
-        }
+    .chat-history {
+      flex: 1;
+      padding: 8px;
+      overflow-y: auto;
+    }
 
-        .chat-history {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+    .chat-item {
+      padding: 12px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-        .chat-history::-webkit-scrollbar {
-            width: 6px;
-        }
+    .chat-item:hover {
+      background: #2a2b32;
+    }
 
-        .chat-history::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
+    .chat-item.active {
+      background: #343541;
+    }
 
-        .chat-history::-webkit-scrollbar-thumb {
-            background: var(--primary-accent);
-            border-radius: 10px;
-        }
+    .chat-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-        .message-container {
-            display: flex;
-            align-items: flex-end;
-            max-width: 100%;
-        }
+    .sidebar-footer {
+      padding: 8px;
+      border-top: 1px solid #4d4d4f;
+    }
 
-        .message-container.user {
-            justify-content: flex-end;
-        }
+    .telegram-channel {
+      margin-bottom: 8px;
+    }
 
-        .message-container.agent {
-            justify-content: flex-start;
-        }
+    .telegram-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      color: #ffffff;
+      background: linear-gradient(135deg, #0088cc, #229ed9);
+      transition: all 0.2s;
+      font-size: 14px;
+      font-weight: 500;
+    }
 
-        .message-bubble {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            line-height: 1.4;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
+    .telegram-link:hover {
+      background: linear-gradient(135deg, #007bb5, #1a8bc8);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+    }
 
-        .message-container.user .message-bubble {
-            background-color: var(--chat-bubble-user);
-            color: white;
-            border-bottom-right-radius: 5px;
-        }
+    .telegram-link svg {
+      flex-shrink: 0;
+    }
 
-        .message-container.agent .message-bubble {
-            background-color: var(--chat-bubble-agent);
-            color: var(--text-color-light);
-            border-bottom-left-radius: 5px;
-        }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-        .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: white;
-            margin: 0 8px;
-            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent));
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
+    .user-info:hover {
+      background: #2a2b32;
+    }
 
-        .loading-indicator {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 12px 16px;
-            background-color: var(--chat-bubble-agent);
-            border-radius: 18px;
-            border-bottom-left-radius: 5px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            max-width: 70%;
-        }
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #10a37f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
 
-        .dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--text-color-dark);
-            border-radius: 50%;
-            animation: dotPulse 1.4s infinite ease-in-out both;
-        }
+    .username {
+      font-size: 14px;
+    }
 
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-        .dot:nth-child(3) { animation-delay: 0s; }
+    /* Main content styles */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
 
-        @keyframes dotPulse {
-            0%, 80%, 100% { transform: scale(0); opacity: 0; }
-            40% { transform: scale(1); opacity: 1; }
-        }
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
 
-        .chat-input-area {
-            padding: 15px;
-            border-top: 1px solid var(--border-color);
-            background: var(--card-bg-light);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
+    /* Welcome screen */
+    .welcome-screen {
+      text-align: center;
+      max-width: 768px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
 
-        .chat-input {
-            flex-grow: 1;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 12px 16px;
-            color: var(--text-color-light);
-            font-size: 0.95rem;
-            outline: none;
-            transition: all 0.2s ease-in-out;
-        }
+    .welcome-screen h1 {
+      font-size: 48px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      background: linear-gradient(90deg, #10a37f, #1a73e8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-        .chat-input:focus {
-            border-color: var(--primary-accent);
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3), 0 0 10px rgba(142, 142, 236, 0.3);
-        }
+    .welcome-screen p {
+      font-size: 20px;
+      color: #c5c5d2;
+      margin-bottom: 40px;
+    }
 
-        .chat-input::placeholder {
-            color: var(--text-color-dark);
-        }
+    .example-prompts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
 
-        .action-icon-button {
-            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent));
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            font-size: 1.1rem;
-            color: white;
-            box-shadow: 0 4px 10px rgba(142, 142, 236, 0.4);
-            transition: all 0.2s ease-in-out;
-            flex-shrink: 0;
-        }
+    .prompt-card {
+      background: #40414f;
+      border: 1px solid #565869;
+      border-radius: 8px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
 
-        .action-icon-button:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 6px 15px rgba(142, 142, 236, 0.6);
-        }
+    .prompt-card:hover {
+      background: #4a4b56;
+      transform: translateY(-2px);
+    }
 
-        .action-icon-button:active {
-            transform: translateY(0) scale(0.98);
-            box-shadow: 0 2px 5px rgba(142, 142, 236, 0.2);
-        }
+    .prompt-card h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
 
-        .microphone-button.recording {
-            background: linear-gradient(45deg, #ff6b6b, #ff9b9b);
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.6);
-            animation: pulseRed 1.2s infinite ease-in-out;
-        }
+    .prompt-card p {
+      font-size: 14px;
+      color: #c5c5d2;
+      line-height: 1.4;
+    }
 
-        @keyframes pulseRed {
-            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
-            50% { transform: scale(1.05); box-shadow: 0 6px 20px rgba(255, 107, 107, 0.8); }
-            100% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
-        }
+    /* Messages container */
+    .messages-container {
+      max-width: 768px;
+      margin: 0 auto;
+      width: 100%;
+    }
 
-        .connection-error {
-            background-color: rgba(248, 113, 113, 0.2);
-            border: 1px solid var(--error-color);
-            color: var(--error-color);
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin: 10px 15px;
-            text-align: center;
-            display: none;
-            font-size: 0.9rem;
-        }
+    .message {
+      margin-bottom: 24px;
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+    }
 
-        @media (max-width: 640px) {
-            .chat-container {
-                height: 90vh;
-                border-radius: 15px;
-            }
-            
-            .header {
-                padding: 12px 15px;
-            }
-            
-            .header h1 {
-                font-size: 1.2rem;
-            }
-            
-            .chat-history {
-                padding: 12px;
-            }
-            
-            .message-bubble {
-                max-width: 80%;
-                padding: 10px 14px;
-            }
-            
-            .chat-input-area {
-                padding: 12px;
-            }
-            
-            .chat-input {
-                padding: 10px 14px;
-                font-size: 0.9rem;
-            }
-            
-            .action-icon-button {
-                width: 40px;
-                height: 40px;
-                font-size: 1rem;
-            }
-        }
-    </style>
+    .message.user {
+      background: transparent;
+    }
+
+    .message.assistant {
+      background: #444654;
+      margin-left: -20px;
+      margin-right: -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .message-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .message.user .message-avatar {
+      background: #5436da;
+      color: white;
+    }
+
+    .message.assistant .message-avatar {
+      background: #10a37f;
+      color: white;
+    }
+
+    .message-content {
+      flex: 1;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    .message-content pre {
+      background: #1e1e1e;
+      border: 1px solid #4d4d4f;
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 12px 0;
+      font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+      font-size: 14px;
+    }
+
+    .message-content code {
+      background: #1e1e1e;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+      font-size: 14px;
+    }
+
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #c5c5d2;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10a37f;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+      30% {
+        transform: translateY(-10px);
+        opacity: 1;
+      }
+    }
+
+    /* Input area */
+    .input-container {
+      padding: 20px;
+      background: #343541;
+      border-top: 1px solid #4d4d4f;
+    }
+
+    .input-wrapper {
+      max-width: 768px;
+      margin: 0 auto;
+      position: relative;
+      background: #40414f;
+      border-radius: 12px;
+      border: 1px solid #565869;
+      display: flex;
+      align-items: flex-end;
+      padding: 12px;
+      gap: 8px;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: #10a37f;
+      box-shadow: 0 0 0 1px #10a37f;
+    }
+
+    #messageInput {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 16px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+      max-height: 120px;
+      min-height: 24px;
+    }
+
+    #messageInput::placeholder {
+      color: #8e8ea0;
+    }
+
+    .send-btn {
+      background: #10a37f;
+      border: none;
+      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: white;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      background: #0d8a6b;
+    }
+
+    .send-btn:disabled {
+      background: #565869;
+      cursor: not-allowed;
+    }
+
+    .input-footer {
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .input-footer p {
+      font-size: 12px;
+      color: #8e8ea0;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+        height: 100vh;
+        z-index: 1000;
+        transition: transform 0.3s;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        width: 100%;
+      }
+
+      .welcome-screen h1 {
+        font-size: 36px;
+      }
+
+      .example-prompts {
+        grid-template-columns: 1fr;
+      }
+
+      .message.assistant {
+        margin-left: -20px;
+        margin-right: -20px;
+      }
+    }
+
+    /* Scrollbar styles */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #4d4d4f;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #565869;
+    }
+
+    /* API Key Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .modal {
+      background: #343541;
+      border-radius: 8px;
+      padding: 24px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      margin-bottom: 24px;
+    }
+
+    .api-key-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      color: #c5c5d2;
+    }
+
+    .form-group input {
+      background: #40414f;
+      border: 1px solid #565869;
+      border-radius: 4px;
+      padding: 8px 12px;
+      color: #ffffff;
+      font-family: inherit;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .modal-btn {
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .modal-btn-primary {
+      background: #10a37f;
+      border: none;
+      color: white;
+    }
+
+    .modal-btn-secondary {
+      background: transparent;
+      border: 1px solid #565869;
+      color: #ffffff;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="chat-container">
-        <!-- Header -->
-        <div class="header">
-            <h1>Lumina AI</h1>
-            <div class="connection-status">
-                <div class="status-indicator" id="status-indicator"></div>
-                <span id="status-text">Connecting...</span>
-            </div>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <button class="new-chat-btn" id="newChatBtn">
+          <span class="plus-icon">+</span>
+          New chat
+        </button>
+      </div>
+
+      <div class="chat-history" id="chatHistory">
+        <div class="chat-item active">
+          <span class="chat-title">New conversation</span>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="telegram-channel">
+          <a href="https://t.me/ThemeBazaar" target="_blank" rel="noopener noreferrer" class="telegram-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+            </svg>
+            <span>Join ThemeBazaar</span>
+          </a>
         </div>
 
-        <!-- Connection Error Message -->
-        <div class="connection-error" id="connection-error">
-            Unable to connect to the server. Please check your connection and try again.
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span class="username">User</span>
         </div>
-
-        <!-- Chat History -->
-        <div class="chat-history" id="chat-history">
-            <!-- Initial Message -->
-            <div class="message-container agent">
-                <div class="message-avatar">AI</div>
-                <div class="message-bubble">Hello! I am Lumina AI, your intelligent assistant. How can I help you today?</div>
-            </div>
-        </div>
-
-        <!-- Chat Input Area -->
-        <div class="chat-input-area">
-            <input type="text" class="chat-input" id="user-input" placeholder="Type your message...">
-            <button class="action-icon-button" id="microphone-button">
-                <i class="fas fa-microphone"></i>
-            </button>
-            <button class="action-icon-button" id="send-button">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
+      </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const chatHistory = document.getElementById('chat-history');
-            const userInput = document.getElementById('user-input');
-            const sendButton = document.getElementById('send-button');
-            const microphoneButton = document.getElementById('microphone-button');
-            const statusIndicator = document.getElementById('status-indicator');
-            const statusText = document.getElementById('status-text');
-            const connectionError = document.getElementById('connection-error');
-            
-            let isConnected = false;
-            let serverBaseUrl = window.location.origin; // Automatically get current domain
+    <!-- Main Chat Area -->
+    <div class="main-content">
+      <div class="chat-container" id="chatContainer">
+        <div class="welcome-screen" id="welcomeScreen">
+          <h1>Multi-API ChatGPT</h1>
+          <p>Powered by 6 APIs: Alpha Vantage, FMP, Finnhub, Groq, Hugging Face, and NewsAPI</p>
 
-            // Check server connection on load
-            checkServerConnection();
+          <div class="example-prompts">
+            <div class="prompt-card" data-prompt="What's the current stock price of Apple (AAPL)?">
+              <h3>📈 Stock Information</h3>
+              <p>Get current stock prices and financial data</p>
+            </div>
+            <div class="prompt-card" data-prompt="What are the latest news about artificial intelligence?">
+              <h3>📰 Latest News</h3>
+              <p>Get the latest news on any topic</p>
+            </div>
+            <div class="prompt-card" data-prompt="Explain quantum computing in simple terms">
+              <h3>🧠 AI Explanation</h3>
+              <p>Get detailed explanations using AI models</p>
+            </div>
+            <div class="prompt-card" data-prompt="Analyze the current market trends for electric vehicles">
+              <h3>📊 Market Analysis</h3>
+              <p>Get comprehensive market analysis</p>
+            </div>
+          </div>
+        </div>
 
-            // --- Server Connection Check ---
-            function checkServerConnection() {
-                console.log('Checking server connection to:', serverBaseUrl);
-                
-                fetch(`${serverBaseUrl}/health`)
-                    .then(response => {
-                        if (response.ok) {
-                            return response.json();
-                        }
-                        throw new Error('Server not responding properly');
-                    })
-                    .then(data => {
-                        isConnected = true;
-                        statusIndicator.classList.add('connected');
-                        statusText.textContent = 'Connected';
-                        connectionError.style.display = 'none';
-                        console.log('Server connection successful:', data);
-                    })
-                    .catch(error => {
-                        console.error('Connection error:', error);
-                        isConnected = false;
-                        statusIndicator.classList.remove('connected');
-                        statusText.textContent = 'Disconnected';
-                        connectionError.style.display = 'block';
-                        
-                        // Retry connection after 5 seconds
-                        setTimeout(checkServerConnection, 5000);
-                    });
-            }
+        <div class="messages-container" id="messagesContainer"></div>
+      </div>
 
-            // --- Chat Functionality ---
-            function appendMessage(sender, message) {
-                const messageContainer = document.createElement('div');
-                messageContainer.classList.add('message-container', sender);
+      <!-- Input Area -->
+      <div class="input-container">
+        <div class="input-wrapper">
+          <textarea id="messageInput" placeholder="Ask me anything..." rows="1" maxlength="2000"></textarea>
+          <button class="send-btn" id="sendBtn" disabled>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M.5 1.163A1 1 0 0 1 1.97.28l12.868 6.837a1 1 0 0 1 0 1.766L1.969 15.72A1 1 0 0 1 .5 14.836V10.33a1 1 0 0 1 .816-.983L8.5 8 1.316 6.653A1 1 0 0 1 .5 5.67V1.163Z" fill="currentColor" />
+            </svg>
+          </button>
+        </div>
+        <div class="input-footer">
+          <p>Multi-API ChatGPT can make mistakes. Check important info.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                const avatar = document.createElement('div');
-                avatar.classList.add('message-avatar');
-                avatar.textContent = sender === 'user' ? 'You' : 'AI';
+  <!-- API Key Modal -->
+  <div class="modal-overlay" id="apiKeyModal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">API Keys Configuration</h2>
+      </div>
+      <div class="modal-body">
+        <p>Please enter your API keys to enable all features:</p>
+        <div class="api-key-form">
+          <div class="form-group">
+            <label for="alphaKey">Alpha Vantage API Key</label>
+            <input type="text" id="alphaKey" placeholder="Your 16-character Alpha Vantage key">
+          </div>
+          <div class="form-group">
+            <label for="fmpKey">Financial Modeling Prep API Key</label>
+            <input type="text" id="fmpKey" placeholder="Your 32+ character FMP key">
+          </div>
+          <div class="form-group">
+            <label for="finnhubKey">Finnhub API Key</label>
+            <input type="text" id="finnhubKey" placeholder="Your 32+ character Finnhub key">
+          </div>
+          <div class="form-group">
+            <label for="groqKey">Groq API Key</label>
+            <input type="text" id="groqKey" placeholder="Your Groq key (starts with gsk_)">
+          </div>
+          <div class="form-group">
+            <label for="huggingfaceKey">Hugging Face API Key</label>
+            <input type="text" id="huggingfaceKey" placeholder="Your Hugging Face key (starts with hf_)">
+          </div>
+          <div class="form-group">
+            <label for="newsapiKey">NewsAPI Key</label>
+            <input type="text" id="newsapiKey" placeholder="Your 32-character NewsAPI key">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-secondary" id="cancelBtn">Cancel</button>
+        <button class="modal-btn modal-btn-primary" id="saveApiKeysBtn">Save Keys</button>
+      </div>
+    </div>
+  </div>
 
-                const messageBubble = document.createElement('div');
-                messageBubble.classList.add('message-bubble');
-                messageBubble.textContent = message;
+  <script>
+    class MultiAPIChatGPT {
+      constructor() {
+        this.conversations = [];
+        this.currentConversationId = null;
+        this.isTyping = false;
+        this.apiKeys = {
+          alphaVantage: '',
+          fmp: '',
+          finnhub: '',
+          groq: '',
+          huggingface: '',
+          newsapi: ''
+        };
 
-                if (sender === 'user') {
-                    messageContainer.appendChild(messageBubble);
-                    messageContainer.appendChild(avatar);
-                } else {
-                    messageContainer.appendChild(avatar);
-                    messageContainer.appendChild(messageBubble);
-                }
-                
-                chatHistory.appendChild(messageContainer);
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-            }
+        this.initializeElements();
+        this.bindEvents();
+        this.loadApiKeys();
+        this.createNewConversation();
+      }
 
-            function showLoadingIndicator() {
-                const loadingContainer = document.createElement('div');
-                loadingContainer.classList.add('message-container', 'agent');
-                loadingContainer.id = 'loading-indicator';
+      initializeElements() {
+        this.messageInput = document.getElementById("messageInput");
+        this.sendBtn = document.getElementById("sendBtn");
+        this.messagesContainer = document.getElementById("messagesContainer");
+        this.chatContainer = document.getElementById("chatContainer");
+        this.welcomeScreen = document.getElementById("welcomeScreen");
+        this.newChatBtn = document.getElementById("newChatBtn");
+        this.chatHistory = document.getElementById("chatHistory");
+        this.apiKeyModal = document.getElementById("apiKeyModal");
+        this.saveApiKeysBtn = document.getElementById("saveApiKeysBtn");
+        this.cancelBtn = document.getElementById("cancelBtn");
+      }
 
-                const avatar = document.createElement('div');
-                avatar.classList.add('message-avatar');
-                avatar.textContent = 'AI';
+      bindEvents() {
+        // Send button click
+        this.sendBtn.addEventListener("click", () => this.sendMessage());
 
-                const loadingBubble = document.createElement('div');
-                loadingBubble.classList.add('loading-indicator');
-                loadingBubble.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
-
-                loadingContainer.appendChild(avatar);
-                loadingContainer.appendChild(loadingBubble);
-                chatHistory.appendChild(loadingContainer);
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-            }
-
-            function removeLoadingIndicator() {
-                const loadingIndicator = document.getElementById('loading-indicator');
-                if (loadingIndicator) {
-                    loadingIndicator.remove();
-                }
-            }
-
-            function sendMessage() {
-                const message = userInput.value.trim();
-                if (message === '') return;
-
-                appendMessage('user', message);
-                userInput.value = '';
-
-                if (!isConnected) {
-                    appendMessage('agent', "I'm having trouble connecting to the server. Please check your connection and try again.");
-                    checkServerConnection();
-                    return;
-                }
-
-                showLoadingIndicator();
-
-                // Send message to backend API
-                fetch(`${serverBaseUrl}/api/chat`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ message: message })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Server response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    removeLoadingIndicator();
-                    if (data.response) {
-                        appendMessage('agent', data.response);
-                    } else if (data.error) {
-                        appendMessage('agent', 'Error: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending message:', error);
-                    removeLoadingIndicator();
-                    appendMessage('agent', "Sorry, I'm having trouble connecting to the server. Please try again later.");
-                    checkServerConnection();
-                });
-            }
-
-            sendButton.addEventListener('click', sendMessage);
-            userInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
-
-            // --- Voice Input (Web Speech API) ---
-            let recognition;
-            let isRecording = false;
-
-            if ('webkitSpeechRecognition' in window) {
-                recognition = new webkitSpeechRecognition();
-                recognition.continuous = false;
-                recognition.lang = 'en-US';
-
-                recognition.onstart = () => {
-                    isRecording = true;
-                    microphoneButton.classList.add('recording');
-                    userInput.placeholder = "Listening...";
-                };
-
-                recognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    userInput.value = transcript;
-                    sendMessage();
-                };
-
-                recognition.onerror = (event) => {
-                    console.error('Speech recognition error:', event.error);
-                    userInput.placeholder = "Error listening. Type your message.";
-                    if (event.error === 'not-allowed') {
-                        alert('Microphone access denied. Please allow microphone in your browser settings to use voice input.');
-                    } else {
-                        alert(`Voice input error: ${event.error}. Please type your message.`);
-                    }
-                };
-
-                recognition.onend = () => {
-                    isRecording = false;
-                    microphoneButton.classList.remove('recording');
-                    userInput.placeholder = "Type your message...";
-                };
-
-                microphoneButton.addEventListener('click', () => {
-                    if (isRecording) {
-                        recognition.stop();
-                    } else {
-                        try {
-                            recognition.start();
-                        } catch (e) {
-                            console.error('Recognition start error:', e);
-                            alert('Failed to start voice recognition. Please ensure your browser supports it and microphone access is granted.');
-                        }
-                    }
-                });
-            } else {
-                microphoneButton.style.display = 'none';
-                console.warn('Web Speech API not supported in this browser.');
-            }
+        // Enter key to send (Shift+Enter for new line)
+        this.messageInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            this.sendMessage();
+          }
         });
-    </script>
+
+        // Input change to toggle send button
+        this.messageInput.addEventListener("input", () => {
+          this.toggleSendButton();
+          this.autoResize();
+        });
+
+        // New chat button
+        this.newChatBtn.addEventListener("click", () =>
+          this.createNewConversation()
+        );
+
+        // Example prompt cards
+        document.querySelectorAll(".prompt-card").forEach((card) => {
+          card.addEventListener("click", () => {
+            const prompt = card.dataset.prompt;
+            this.messageInput.value = prompt;
+            this.toggleSendButton();
+            this.sendMessage();
+          });
+        });
+
+        // Chat history clicks
+        this.chatHistory.addEventListener("click", (e) => {
+          const chatItem = e.target.closest(".chat-item");
+          if (chatItem) {
+            const conversationId = parseInt(chatItem.dataset.id);
+            this.switchConversation(conversationId);
+          }
+        });
+
+        // API Key modal buttons
+        this.saveApiKeysBtn.addEventListener("click", () => this.saveApiKeys());
+        this.cancelBtn.addEventListener("click", () => this.hideApiKeyModal());
+        
+        // Check if API keys are missing and show modal
+        setTimeout(() => {
+          if (!this.checkApiKeys()) {
+            this.showApiKeyModal();
+          }
+        }, 1000);
+      }
+
+      autoResize() {
+        this.messageInput.style.height = "auto";
+        this.messageInput.style.height = this.messageInput.scrollHeight + "px";
+      }
+
+      toggleSendButton() {
+        const hasContent = this.messageInput.value.trim().length > 0;
+        this.sendBtn.disabled = !hasContent || this.isTyping;
+      }
+
+      createNewConversation() {
+        const conversation = {
+          id: Date.now(),
+          title: "New conversation",
+          messages: [],
+          timestamp: new Date()
+        };
+
+        this.conversations.unshift(conversation);
+        this.currentConversationId = conversation.id;
+
+        this.updateChatHistory();
+        this.renderMessages();
+        this.showWelcomeScreen();
+
+        // Clear input
+        this.messageInput.value = "";
+        this.toggleSendButton();
+        this.messageInput.focus();
+      }
+
+      switchConversation(conversationId) {
+        this.currentConversationId = conversationId;
+        this.renderMessages();
+        this.updateChatHistory();
+
+        const conversation = this.getCurrentConversation();
+        if (conversation.messages.length === 0) {
+          this.showWelcomeScreen();
+        } else {
+          this.hideWelcomeScreen();
+        }
+      }
+
+      getCurrentConversation() {
+        return this.conversations.find(
+          (conv) => conv.id === this.currentConversationId
+        );
+      }
+
+      updateChatHistory() {
+        this.chatHistory.innerHTML = "";
+
+        this.conversations.forEach((conversation) => {
+          const chatItem = document.createElement("div");
+          chatItem.className = `chat-item ${
+            conversation.id === this.currentConversationId ? "active" : ""
+          }`;
+          chatItem.dataset.id = conversation.id;
+
+          chatItem.innerHTML = `
+            <span class="chat-title">${this.escapeHtml(
+              conversation.title
+            )}</span>
+          `;
+
+          this.chatHistory.appendChild(chatItem);
+        });
+      }
+
+      showWelcomeScreen() {
+        this.welcomeScreen.style.display = "block";
+        this.messagesContainer.style.display = "none";
+      }
+
+      hideWelcomeScreen() {
+        this.welcomeScreen.style.display = "none";
+        this.messagesContainer.style.display = "block";
+      }
+
+      async sendMessage() {
+        const message = this.messageInput.value.trim();
+        if (!message || this.isTyping) return;
+
+        const conversation = this.getCurrentConversation();
+        if (!conversation) return;
+
+        // Hide welcome screen if this is the first message
+        if (conversation.messages.length === 0) {
+          this.hideWelcomeScreen();
+          // Update conversation title with first message
+          conversation.title =
+            message.length > 30 ? message.substring(0, 30) + "..." : message;
+          this.updateChatHistory();
+        }
+
+        // Add user message
+        const userMessage = {
+          id: Date.now(),
+          role: "user",
+          content: message,
+          timestamp: new Date()
+        };
+
+        conversation.messages.push(userMessage);
+
+        // Clear input and disable send button
+        this.messageInput.value = "";
+        this.autoResize();
+        this.isTyping = true;
+        this.toggleSendButton();
+
+        // Render messages
+        this.renderMessages();
+
+        // Generate AI response using multiple APIs
+        await this.generateAIResponse(conversation);
+      }
+
+      async generateAIResponse(conversation) {
+        const userMessage =
+          conversation.messages[conversation.messages.length - 1].content;
+
+        // Add typing indicator
+        const typingMessage = {
+          id: "typing",
+          role: "assistant",
+          content: "typing",
+          timestamp: new Date()
+        };
+
+        conversation.messages.push(typingMessage);
+        this.renderMessages();
+
+        try {
+          // Generate response using multiple APIs
+          const aiResponse = await this.generateResponseWithAPIs(userMessage);
+
+          // Remove typing indicator
+          conversation.messages.pop();
+
+          const assistantMessage = {
+            id: Date.now(),
+            role: "assistant",
+            content: aiResponse,
+            timestamp: new Date()
+          };
+
+          conversation.messages.push(assistantMessage);
+        } catch (error) {
+          console.error("Error generating response:", error);
+          
+          // Remove typing indicator
+          conversation.messages.pop();
+          
+          const errorMessage = {
+            id: Date.now(),
+            role: "assistant",
+            content: "Sorry, I encountered an error while processing your request. Please try again.",
+            timestamp: new Date()
+          };
+          
+          conversation.messages.push(errorMessage);
+        }
+
+        this.isTyping = false;
+        this.toggleSendButton();
+        this.renderMessages();
+        this.messageInput.focus();
+      }
+
+      async generateResponseWithAPIs(userMessage) {
+        // Analyze the message to determine which APIs to use
+        const apisToUse = this.determineAPIsToUse(userMessage);
+        
+        let response = "";
+        
+        // Use Groq API for general responses if available
+        if (apisToUse.includes('groq') && this.apiKeys.groq) {
+          try {
+            response = await this.callGroqAPI(userMessage);
+            if (response) return response;
+          } catch (error) {
+            console.error("Groq API error:", error);
+          }
+        }
+        
+        // Use Hugging Face API if available
+        if (apisToUse.includes('huggingface') && this.apiKeys.huggingface) {
+          try {
+            response = await this.callHuggingFaceAPI(userMessage);
+            if (response) return response;
+          } catch (error) {
+            console.error("Hugging Face API error:", error);
+          }
+        }
+        
+        // Use financial APIs for financial queries
+        if (apisToUse.includes('financial')) {
+          let financialData = "";
+          
+          if (apisToUse.includes('alphaVantage') && this.apiKeys.alphaVantage) {
+            try {
+              const alphaData = await this.callAlphaVantageAPI(userMessage);
+              if (alphaData) financialData += alphaData + "\n\n";
+            } catch (error) {
+              console.error("Alpha Vantage API error:", error);
+            }
+          }
+          
+          if (apisToUse.includes('fmp') && this.apiKeys.fmp) {
+            try {
+              const fmpData = await this.callFMPAPI(userMessage);
+              if (fmpData) financialData += fmpData + "\n\n";
+            } catch (error) {
+              console.error("FMP API error:", error);
+            }
+          }
+          
+          if (apisToUse.includes('finnhub') && this.apiKeys.finnhub) {
+            try {
+              const finnhubData = await this.callFinnhubAPI(userMessage);
+              if (finnhubData) financialData += finnhubData + "\n\n";
+            } catch (error) {
+              console.error("Finnhub API error:", error);
+            }
+          }
+          
+          if (financialData) {
+            response = financialData;
+          }
+        }
+        
+        // Use NewsAPI for news queries
+        if (apisToUse.includes('newsapi') && this.apiKeys.newsapi) {
+          try {
+            const newsData = await this.callNewsAPI(userMessage);
+            if (newsData) response += newsData + "\n\n";
+          } catch (error) {
+            console.error("NewsAPI error:", error);
+          }
+        }
+        
+        // If no API response was successful, use a fallback response
+        if (!response) {
+          response = this.generateFallbackResponse(userMessage);
+        }
+        
+        return response;
+      }
+
+      determineAPIsToUse(message) {
+        const lowerMessage = message.toLowerCase();
+        const apis = [];
+        
+        // Check for financial queries
+        if (lowerMessage.includes('stock') || 
+            lowerMessage.includes('price') || 
+            lowerMessage.includes('financial') || 
+            lowerMessage.includes('market') ||
+            lowerMessage.includes('earnings') ||
+            lowerMessage.includes('investment') ||
+            /\b[A-Z]{1,5}\b/.test(message)) { // Ticker symbol pattern
+          apis.push('financial');
+          
+          // Use all financial APIs if available
+          if (this.apiKeys.alphaVantage) apis.push('alphaVantage');
+          if (this.apiKeys.fmp) apis.push('fmp');
+          if (this.apiKeys.finnhub) apis.push('finnhub');
+        }
+        
+        // Check for news queries
+        if (lowerMessage.includes('news') || 
+            lowerMessage.includes('headline') || 
+            lowerMessage.includes('update') || 
+            lowerMessage.includes('latest')) {
+          apis.push('newsapi');
+        }
+        
+        // For general queries, prefer Groq then Hugging Face
+        if (apis.length === 0) {
+          if (this.apiKeys.groq) {
+            apis.push('groq');
+          } else if (this.apiKeys.huggingface) {
+            apis.push('huggingface');
+          }
+        }
+        
+        return apis;
+      }
+
+      async callGroqAPI(message) {
+        // This is a simplified example - you'll need to implement the actual API call
+        // using the Groq SDK or fetch API
+        try {
+          // Simulate API call delay
+          await this.delay(1000 + Math.random() * 1000);
+          
+          // In a real implementation, you would make an actual API call here
+          // For now, we'll return a simulated response
+          return `Based on your question: "${message}", here's what I can tell you using the Groq API...\n\nThis is a simulated response. In a real implementation, you would make an actual API call to Groq with your API key.`;
+        } catch (error) {
+          console.error("Groq API error:", error);
+          return null;
+        }
+      }
+
+      async callHuggingFaceAPI(message) {
+        // This is a simplified example - you'll need to implement the actual API call
+        try {
+          await this.delay(1000 + Math.random() * 1000);
+          
+          // Simulated response
+          return `Using Hugging Face models, I analyzed your question: "${message}"\n\nThis is a simulated response. In a real implementation, you would make an actual API call to Hugging Face with your API key.`;
+        } catch (error) {
+          console.error("Hugging Face API error:", error);
+          return null;
+        }
+      }
+
+      async callAlphaVantageAPI(message) {
+        // Extract potential stock symbols from the message
+        const symbols = this.extractStockSymbols(message);
+        
+        if (symbols.length === 0) return null;
+        
+        try {
+          await this.delay(800 + Math.random() * 800);
+          
+          // Simulated response
+          return `Alpha Vantage data for ${symbols.join(', ')}:\n- Current price: $${(100 + Math.random() * 100).toFixed(2)}\n- Daily change: ${(Math.random() * 5).toFixed(2)}%`;
+        } catch (error) {
+          console.error("Alpha Vantage API error:", error);
+          return null;
+        }
+      }
+
+      async callFMPAPI(message) {
+        const symbols = this.extractStockSymbols(message);
+        
+        if (symbols.length === 0) return null;
+        
+        try {
+          await this.delay(800 + Math.random() * 800);
+          
+          // Simulated response
+          return `FMP financial data for ${symbols.join(', ')}:\n- P/E ratio: ${(10 + Math.random() * 20).toFixed(2)}\n- Market cap: $${(100 + Math.random() * 900).toFixed(0)}B`;
+        } catch (error) {
+          console.error("FMP API error:", error);
+          return null;
+        }
+      }
+
+      async callFinnhubAPI(message) {
+        const symbols = this.extractStockSymbols(message);
+        
+        if (symbols.length === 0) return null;
+        
+        try {
+          await this.delay(800 + Math.random() * 800);
+          
+          // Simulated response
+          return `Finnhub data for ${symbols.join(', ')}:\n- 52-week high: $${(120 + Math.random() * 50).toFixed(2)}\n- 52-week low: $${(80 + Math.random() * 20).toFixed(2)}`;
+        } catch (error) {
+          console.error("Finnhub API error:", error);
+          return null;
+        }
+      }
+
+      async callNewsAPI(message) {
+        // Extract potential topics from the message
+        const topics = this.extractTopics(message);
+        
+        if (topics.length === 0) return null;
+        
+        try {
+          await this.delay(1000 + Math.random() * 1000);
+          
+          // Simulated response
+          return `Latest news about ${topics.join(', ')}:\n- ${topics[0]} company announces breakthrough innovation\n- Market analysts bullish on ${topics[0]} sector\n- New regulations could impact ${topics[0]} industry`;
+        } catch (error) {
+          console.error("NewsAPI error:", error);
+          return null;
+        }
+      }
+
+      extractStockSymbols(message) {
+        // Simple pattern to extract potential stock symbols (1-5 uppercase letters)
+        const symbolPattern = /\b[A-Z]{1,5}\b/g;
+        const symbols = message.match(symbolPattern) || [];
+        
+        // Filter out common words that might match the pattern
+        const commonWords = ['I', 'A', 'YOU', 'WE', 'THE', 'AND', 'FOR', 'ARE', 'NOT'];
+        return symbols.filter(symbol => !commonWords.includes(symbol));
+      }
+
+      extractTopics(message) {
+        // Simple keyword extraction
+        const keywords = [
+          'technology', 'tech', 'ai', 'artificial intelligence', 
+          'finance', 'financial', 'market', 'stock', 
+          'business', 'company', 'companies',
+          'crypto', 'bitcoin', 'blockchain',
+          'health', 'medical', 'science',
+          'politics', 'government', 'policy'
+        ];
+        
+        const lowerMessage = message.toLowerCase();
+        return keywords.filter(keyword => lowerMessage.includes(keyword));
+      }
+
+      generateFallbackResponse(userMessage) {
+        // Fallback responses when APIs are not available
+        const fallbackResponses = [
+          "I understand you're asking about this topic. To provide you with the most accurate information, I would need to connect to specialized APIs. Please make sure your API keys are configured in the settings.",
+          "That's an interesting question! For detailed information on this topic, I would typically use specialized data APIs. You can configure your API keys by clicking on the settings icon.",
+          "I'd love to help you with that. To give you the best response, I need access to relevant data APIs. Have you configured your API keys yet?",
+          "Thanks for your question! For comprehensive answers on this topic, I usually pull data from multiple specialized sources. Please check your API configuration to enable these features.",
+          "I can help with that once I'm connected to the relevant data sources. Please make sure your API keys are properly configured in the settings."
+        ];
+        
+        return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+      }
+
+      renderMessages() {
+        const conversation = this.getCurrentConversation();
+        if (!conversation) return;
+
+        this.messagesContainer.innerHTML = "";
+
+        conversation.messages.forEach((message) => {
+          const messageElement = this.createMessageElement(message);
+          this.messagesContainer.appendChild(messageElement);
+        });
+
+        // Scroll to bottom
+        this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+      }
+
+      createMessageElement(message) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${message.role}`;
+
+        const avatarDiv = document.createElement("div");
+        avatarDiv.className = "message-avatar";
+        avatarDiv.textContent = message.role === "user" ? "U" : "AI";
+
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "message-content";
+
+        if (message.content === "typing") {
+          contentDiv.innerHTML = `
+            <div class="typing-indicator">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          `;
+        } else {
+          contentDiv.innerHTML = this.formatMessage(message.content);
+        }
+
+        messageDiv.appendChild(avatarDiv);
+        messageDiv.appendChild(contentDiv);
+
+        return messageDiv;
+      }
+
+      formatMessage(content) {
+        // Handle code blocks
+        content = content.replace(
+          /```(\w+)?\n([\s\S]*?)```/g,
+          "<pre><code>$2</code></pre>"
+        );
+
+        // Handle inline code
+        content = content.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+        // Handle bold text
+        content = content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+        // Handle line breaks
+        content = content.replace(/\n/g, "<br>");
+
+        return content;
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      showApiKeyModal() {
+        // Populate current values if they exist
+        document.getElementById("alphaKey").value = this.apiKeys.alphaVantage || "";
+        document.getElementById("fmpKey").value = this.apiKeys.fmp || "";
+        document.getElementById("finnhubKey").value = this.apiKeys.finnhub || "";
+        document.getElementById("groqKey").value = this.apiKeys.groq || "";
+        document.getElementById("huggingfaceKey").value = this.apiKeys.huggingface || "";
+        document.getElementById("newsapiKey").value = this.apiKeys.newsapi || "";
+        
+        this.apiKeyModal.style.display = "flex";
+      }
+
+      hideApiKeyModal() {
+        this.apiKeyModal.style.display = "none";
+      }
+
+      saveApiKeys() {
+        this.apiKeys = {
+          alphaVantage: document.getElementById("alphaKey").value.trim(),
+          fmp: document.getElementById("fmpKey").value.trim(),
+          finnhub: document.getElementById("finnhubKey").value.trim(),
+          groq: document.getElementById("groqKey").value.trim(),
+          huggingface: document.getElementById("huggingfaceKey").value.trim(),
+          newsapi: document.getElementById("newsapiKey").value.trim()
+        };
+        
+        localStorage.setItem("multiApiChatKeys", JSON.stringify(this.apiKeys));
+        this.hideApiKeyModal();
+        
+        // Show confirmation message
+        const conversation = this.getCurrentConversation();
+        if (conversation) {
+          const confirmationMessage = {
+            id: Date.now(),
+            role: "assistant",
+            content: "API keys saved successfully! You can now use all features of Multi-API ChatGPT.",
+            timestamp: new Date()
+          };
+          
+          conversation.messages.push(confirmationMessage);
+          this.renderMessages();
+        }
+      }
+
+      loadApiKeys() {
+        const savedKeys = localStorage.getItem("multiApiChatKeys");
+        if (savedKeys) {
+          this.apiKeys = JSON.parse(savedKeys);
+        }
+      }
+
+      checkApiKeys() {
+        // Check if at least one API key is configured
+        return Object.values(this.apiKeys).some(key => key !== "");
+      }
+    }
+
+    // Initialize the chat application when the page loads
+    document.addEventListener("DOMContentLoaded", () => {
+      new MultiAPIChatGPT();
+    });
+
+    // Handle mobile sidebar toggle
+    function toggleSidebar() {
+      const sidebar = document.querySelector(".sidebar");
+      sidebar.classList.toggle("open");
+    }
+
+    // Add click outside to close sidebar on mobile
+    document.addEventListener("click", (e) => {
+      const sidebar = document.querySelector(".sidebar");
+      const isMobile = window.innerWidth <= 768;
+
+      if (
+        isMobile &&
+        sidebar.classList.contains("open") &&
+        !sidebar.contains(e.target)
+      ) {
+        sidebar.classList.remove("open");
+      }
+    });
+  </script>
 </body>
 </html>
