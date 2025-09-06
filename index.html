@@ -6,7 +6,6 @@
     <title>Lumina AI - Your Intelligent Agent</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
             --bg-gradient-start: #1c1c3a;
@@ -24,6 +23,12 @@
             --error-color: #f87171;
         }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
@@ -32,40 +37,10 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
             padding: 20px;
         }
 
-        .particle-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 0;
-        }
-
-        .particle {
-            position: absolute;
-            background-color: var(--primary-accent);
-            border-radius: 50%;
-            opacity: 0;
-            animation: particleFadeMove linear infinite;
-            box-shadow: 0 0 5px var(--primary-accent);
-        }
-
-        @keyframes particleFadeMove {
-            0% { transform: translateZ(0) scale(0.5); opacity: 0; }
-            10% { opacity: 0.2; }
-            80% { opacity: 0.1; }
-            100% { transform: translate3d(var(--x), var(--y), var(--z)) scale(var(--s)); opacity: 0; }
-        }
-
-        .aether-ui-container {
-            position: relative;
-            z-index: 1;
+        .chat-container {
             width: 100%;
             max-width: 800px;
             height: 85vh;
@@ -87,8 +62,6 @@
             justify-content: space-between;
             align-items: center;
             background: var(--card-bg-light);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
         }
 
         .header h1 {
@@ -96,7 +69,6 @@
             font-size: 1.4rem;
             color: var(--primary-accent);
             text-shadow: 0 0 5px rgba(142, 142, 236, 0.5);
-            margin: 0;
         }
 
         .connection-status {
@@ -111,17 +83,10 @@
             height: 8px;
             border-radius: 50%;
             background-color: var(--error-color);
-            animation: pulse 2s infinite;
         }
 
         .status-indicator.connected {
             background-color: var(--success-color);
-        }
-
-        @keyframes pulse {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
         }
 
         .chat-history {
@@ -310,7 +275,7 @@
         }
 
         @media (max-width: 640px) {
-            .aether-ui-container {
+            .chat-container {
                 height: 90vh;
                 border-radius: 15px;
             }
@@ -350,9 +315,7 @@
     </style>
 </head>
 <body>
-    <div class="particle-bg" id="particle-bg"></div>
-
-    <div class="aether-ui-container">
+    <div class="chat-container">
         <!-- Header -->
         <div class="header">
             <h1>Lumina AI</h1>
@@ -394,47 +357,21 @@
             const userInput = document.getElementById('user-input');
             const sendButton = document.getElementById('send-button');
             const microphoneButton = document.getElementById('microphone-button');
-            const particleBg = document.getElementById('particle-bg');
             const statusIndicator = document.getElementById('status-indicator');
             const statusText = document.getElementById('status-text');
             const connectionError = document.getElementById('connection-error');
             
             let isConnected = false;
+            let serverBaseUrl = window.location.origin; // Automatically get current domain
 
-            // Check server connection
+            // Check server connection on load
             checkServerConnection();
-
-            // --- Particle Background Generation ---
-            function createParticle() {
-                const particle = document.createElement('div');
-                particle.classList.add('particle');
-                particleBg.appendChild(particle);
-
-                const size = Math.random() * 2 + 1;
-                const x = Math.random() * 100 + 'vw';
-                const y = Math.random() * 100 + 'vh';
-                const z = Math.random() * 500 - 250 + 'px';
-                const duration = Math.random() * 10 + 10;
-
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.left = x;
-                particle.style.top = y;
-                particle.style.setProperty('--x', x);
-                particle.style.setProperty('--y', y);
-                particle.style.setProperty('--z', z);
-                particle.style.setProperty('--s', Math.random() * 1 + 0.5);
-                particle.style.animationDuration = `${duration}s`;
-                particle.style.animationDelay = `-${Math.random() * duration}s`;
-            }
-
-            for (let i = 0; i < 80; i++) {
-                createParticle();
-            }
 
             // --- Server Connection Check ---
             function checkServerConnection() {
-                fetch('/health')
+                console.log('Checking server connection to:', serverBaseUrl);
+                
+                fetch(`${serverBaseUrl}/health`)
                     .then(response => {
                         if (response.ok) {
                             return response.json();
@@ -446,6 +383,7 @@
                         statusIndicator.classList.add('connected');
                         statusText.textContent = 'Connected';
                         connectionError.style.display = 'none';
+                        console.log('Server connection successful:', data);
                     })
                     .catch(error => {
                         console.error('Connection error:', error);
@@ -526,7 +464,7 @@
                 showLoadingIndicator();
 
                 // Send message to backend API
-                fetch('/api/chat', {
+                fetch(`${serverBaseUrl}/api/chat`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
