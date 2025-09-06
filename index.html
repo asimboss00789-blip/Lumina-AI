@@ -1,28 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StarLink</title>
-<link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarLink</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js" defer></script>
+    <script src="js/ChatAI.js" defer></script>
 </head>
 <body>
-<div class="chat-container">
-    <header>
-        <h1>StarLink</h1>
-        <p class="subtitle">Made by Fallensoul</p>
-    </header>
-
-    <div class="messages" id="messages">
-        <!-- Chat messages appear here -->
+    <div class="chat-ai">
+        <!-- Chat messages will be injected here by ChatAI.js -->
     </div>
 
-    <form id="message-form">
-        <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off" required>
-        <button type="submit" id="send-button">Send</button>
-    </form>
-</div>
-
-<script src="js/ChatAI.js" defer></script>
+    <!-- Optional header -->
+    <header class="chat-header">
+        <h1>StarLink</h1>
+        <span class="subtext">Made with love by Fallensoul</span>
+    </header>
 </body>
 </html>
