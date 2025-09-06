@@ -17,33 +17,42 @@ router.post('/conversations/:id', (req, res) => {
     const convoFile = path.join(conversationsPath, `${req.params.id}.json`);
     let messages = readJSON(convoFile);
     messages.push(req.body); // { sender, message, timestamp }
-    messages = truncateMessages(messages, 50);
+    messages = truncateMessages(messages); // keep last 50 messages
     writeJSON(convoFile, messages);
     res.json({ success: true, messages });
 });
 
-// POST: Call all 6 APIs at once
+// POST all APIs at once
 router.post('/api-call/all', async (req, res) => {
     const { input } = req.body;
 
-    // Replace these with actual API calls
-    const apiResponses = await Promise.all([
-        fakeAPI('huggingface', input),
-        fakeAPI('alpha', input),
-        fakeAPI('fmp', input),
-        fakeAPI('finnhub', input),
-        fakeAPI('groq', input),
-        fakeAPI('newsapi', input)
-    ]);
+    try {
+        // Replace these with real API calls
+        const responses = await Promise.all([
+            callHuggingFace(input),
+            callAlpha(input),
+            callFMP(input),
+            callFinnhub(input),
+            callGroq(input),
+            callNewsAPI(input)
+        ]);
 
-    const combinedResult = apiResponses.join('\n\n'); // Combine responses
-    res.json({ success: true, result: combinedResult });
+        // Combine all results into one answer
+        const combinedAnswer = responses.join(' ');
+
+        res.json({ success: true, result: combinedAnswer });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, result: 'Error calling APIs.' });
+    }
 });
 
-// Example fake API function
-async function fakeAPI(name, input) {
-    // In reality, call the real API here
-    return `Response from ${name}: processed "${input}"`;
-}
+// Dummy placeholder functions (replace with your actual API calls)
+async function callHuggingFace(input) { return `Response from HuggingFace for "${input}"`; }
+async function callAlpha(input) { return `Response from Alpha for "${input}"`; }
+async function callFMP(input) { return `Response from FMP for "${input}"`; }
+async function callFinnhub(input) { return `Response from Finnhub for "${input}"`; }
+async function callGroq(input) { return `Response from Groq for "${input}"`; }
+async function callNewsAPI(input) { return `Response from NewsAPI for "${input}"`; }
 
 module.exports = router;
