@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multi-API ChatGPT Clone</title>
+  <title>Multi-API ChatGPT</title>
   <style>
     /* Reset and base styles */
     * {
@@ -466,93 +466,18 @@
       background: #565869;
     }
 
-    /* API Key Modal */
-    .modal-overlay {
+    /* API status indicator */
+    .api-status {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-    }
-
-    .modal {
-      background: #343541;
-      border-radius: 8px;
-      padding: 24px;
-      width: 90%;
-      max-width: 500px;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-
-    .modal-header {
-      margin-bottom: 16px;
-    }
-
-    .modal-title {
-      font-size: 20px;
-      font-weight: 600;
-    }
-
-    .modal-body {
-      margin-bottom: 24px;
-    }
-
-    .api-key-form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-group label {
-      font-size: 14px;
-      color: #c5c5d2;
-    }
-
-    .form-group input {
-      background: #40414f;
-      border: 1px solid #565869;
-      border-radius: 4px;
+      bottom: 10px;
+      right: 10px;
+      background: #202123;
+      border: 1px solid #4d4d4f;
+      border-radius: 6px;
       padding: 8px 12px;
-      color: #ffffff;
-      font-family: inherit;
-    }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-    }
-
-    .modal-btn {
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .modal-btn-primary {
-      background: #10a37f;
-      border: none;
-      color: white;
-    }
-
-    .modal-btn-secondary {
-      background: transparent;
-      border: 1px solid #565869;
-      color: #ffffff;
+      font-size: 12px;
+      color: #c5c5d2;
+      z-index: 1000;
     }
   </style>
 </head>
@@ -638,47 +563,7 @@
     </div>
   </div>
 
-  <!-- API Key Modal -->
-  <div class="modal-overlay" id="apiKeyModal" style="display: none;">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 class="modal-title">API Keys Configuration</h2>
-      </div>
-      <div class="modal-body">
-        <p>Please enter your API keys to enable all features:</p>
-        <div class="api-key-form">
-          <div class="form-group">
-            <label for="alphaKey">Alpha Vantage API Key</label>
-            <input type="text" id="alphaKey" placeholder="Your 16-character Alpha Vantage key">
-          </div>
-          <div class="form-group">
-            <label for="fmpKey">Financial Modeling Prep API Key</label>
-            <input type="text" id="fmpKey" placeholder="Your 32+ character FMP key">
-          </div>
-          <div class="form-group">
-            <label for="finnhubKey">Finnhub API Key</label>
-            <input type="text" id="finnhubKey" placeholder="Your 32+ character Finnhub key">
-          </div>
-          <div class="form-group">
-            <label for="groqKey">Groq API Key</label>
-            <input type="text" id="groqKey" placeholder="Your Groq key (starts with gsk_)">
-          </div>
-          <div class="form-group">
-            <label for="huggingfaceKey">Hugging Face API Key</label>
-            <input type="text" id="huggingfaceKey" placeholder="Your Hugging Face key (starts with hf_)">
-          </div>
-          <div class="form-group">
-            <label for="newsapiKey">NewsAPI Key</label>
-            <input type="text" id="newsapiKey" placeholder="Your 32-character NewsAPI key">
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="modal-btn modal-btn-secondary" id="cancelBtn">Cancel</button>
-        <button class="modal-btn modal-btn-primary" id="saveApiKeysBtn">Save Keys</button>
-      </div>
-    </div>
-  </div>
+  <div class="api-status" id="apiStatus">Server: Connecting...</div>
 
   <script>
     class MultiAPIChatGPT {
@@ -686,19 +571,12 @@
         this.conversations = [];
         this.currentConversationId = null;
         this.isTyping = false;
-        this.apiKeys = {
-          alphaVantage: '',
-          fmp: '',
-          finnhub: '',
-          groq: '',
-          huggingface: '',
-          newsapi: ''
-        };
+        this.apiStatus = document.getElementById('apiStatus');
 
         this.initializeElements();
         this.bindEvents();
-        this.loadApiKeys();
         this.createNewConversation();
+        this.checkServerStatus();
       }
 
       initializeElements() {
@@ -709,9 +587,6 @@
         this.welcomeScreen = document.getElementById("welcomeScreen");
         this.newChatBtn = document.getElementById("newChatBtn");
         this.chatHistory = document.getElementById("chatHistory");
-        this.apiKeyModal = document.getElementById("apiKeyModal");
-        this.saveApiKeysBtn = document.getElementById("saveApiKeysBtn");
-        this.cancelBtn = document.getElementById("cancelBtn");
       }
 
       bindEvents() {
@@ -755,17 +630,6 @@
             this.switchConversation(conversationId);
           }
         });
-
-        // API Key modal buttons
-        this.saveApiKeysBtn.addEventListener("click", () => this.saveApiKeys());
-        this.cancelBtn.addEventListener("click", () => this.hideApiKeyModal());
-        
-        // Check if API keys are missing and show modal
-        setTimeout(() => {
-          if (!this.checkApiKeys()) {
-            this.showApiKeyModal();
-          }
-        }, 1000);
       }
 
       autoResize() {
@@ -883,7 +747,7 @@
         // Render messages
         this.renderMessages();
 
-        // Generate AI response using multiple APIs
+        // Generate AI response using server API
         await this.generateAIResponse(conversation);
       }
 
@@ -903,8 +767,20 @@
         this.renderMessages();
 
         try {
-          // Generate response using multiple APIs
-          const aiResponse = await this.generateResponseWithAPIs(userMessage);
+          // Send message to server API
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: userMessage })
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
 
           // Remove typing indicator
           conversation.messages.pop();
@@ -912,11 +788,13 @@
           const assistantMessage = {
             id: Date.now(),
             role: "assistant",
-            content: aiResponse,
+            content: data.response,
             timestamp: new Date()
           };
 
           conversation.messages.push(assistantMessage);
+          this.updateApiStatus('Connected', true);
+
         } catch (error) {
           console.error("Error generating response:", error);
           
@@ -926,11 +804,12 @@
           const errorMessage = {
             id: Date.now(),
             role: "assistant",
-            content: "Sorry, I encountered an error while processing your request. Please try again.",
+            content: "Sorry, I encountered an error while processing your request. Please try again later.",
             timestamp: new Date()
           };
           
           conversation.messages.push(errorMessage);
+          this.updateApiStatus('Connection Error', false);
         }
 
         this.isTyping = false;
@@ -939,257 +818,22 @@
         this.messageInput.focus();
       }
 
-      async generateResponseWithAPIs(userMessage) {
-        // Analyze the message to determine which APIs to use
-        const apisToUse = this.determineAPIsToUse(userMessage);
-        
-        let response = "";
-        
-        // Use Groq API for general responses if available
-        if (apisToUse.includes('groq') && this.apiKeys.groq) {
-          try {
-            response = await this.callGroqAPI(userMessage);
-            if (response) return response;
-          } catch (error) {
-            console.error("Groq API error:", error);
-          }
-        }
-        
-        // Use Hugging Face API if available
-        if (apisToUse.includes('huggingface') && this.apiKeys.huggingface) {
-          try {
-            response = await this.callHuggingFaceAPI(userMessage);
-            if (response) return response;
-          } catch (error) {
-            console.error("Hugging Face API error:", error);
-          }
-        }
-        
-        // Use financial APIs for financial queries
-        if (apisToUse.includes('financial')) {
-          let financialData = "";
-          
-          if (apisToUse.includes('alphaVantage') && this.apiKeys.alphaVantage) {
-            try {
-              const alphaData = await this.callAlphaVantageAPI(userMessage);
-              if (alphaData) financialData += alphaData + "\n\n";
-            } catch (error) {
-              console.error("Alpha Vantage API error:", error);
-            }
-          }
-          
-          if (apisToUse.includes('fmp') && this.apiKeys.fmp) {
-            try {
-              const fmpData = await this.callFMPAPI(userMessage);
-              if (fmpData) financialData += fmpData + "\n\n";
-            } catch (error) {
-              console.error("FMP API error:", error);
-            }
-          }
-          
-          if (apisToUse.includes('finnhub') && this.apiKeys.finnhub) {
-            try {
-              const finnhubData = await this.callFinnhubAPI(userMessage);
-              if (finnhubData) financialData += finnhubData + "\n\n";
-            } catch (error) {
-              console.error("Finnhub API error:", error);
-            }
-          }
-          
-          if (financialData) {
-            response = financialData;
-          }
-        }
-        
-        // Use NewsAPI for news queries
-        if (apisToUse.includes('newsapi') && this.apiKeys.newsapi) {
-          try {
-            const newsData = await this.callNewsAPI(userMessage);
-            if (newsData) response += newsData + "\n\n";
-          } catch (error) {
-            console.error("NewsAPI error:", error);
-          }
-        }
-        
-        // If no API response was successful, use a fallback response
-        if (!response) {
-          response = this.generateFallbackResponse(userMessage);
-        }
-        
-        return response;
-      }
-
-      determineAPIsToUse(message) {
-        const lowerMessage = message.toLowerCase();
-        const apis = [];
-        
-        // Check for financial queries
-        if (lowerMessage.includes('stock') || 
-            lowerMessage.includes('price') || 
-            lowerMessage.includes('financial') || 
-            lowerMessage.includes('market') ||
-            lowerMessage.includes('earnings') ||
-            lowerMessage.includes('investment') ||
-            /\b[A-Z]{1,5}\b/.test(message)) { // Ticker symbol pattern
-          apis.push('financial');
-          
-          // Use all financial APIs if available
-          if (this.apiKeys.alphaVantage) apis.push('alphaVantage');
-          if (this.apiKeys.fmp) apis.push('fmp');
-          if (this.apiKeys.finnhub) apis.push('finnhub');
-        }
-        
-        // Check for news queries
-        if (lowerMessage.includes('news') || 
-            lowerMessage.includes('headline') || 
-            lowerMessage.includes('update') || 
-            lowerMessage.includes('latest')) {
-          apis.push('newsapi');
-        }
-        
-        // For general queries, prefer Groq then Hugging Face
-        if (apis.length === 0) {
-          if (this.apiKeys.groq) {
-            apis.push('groq');
-          } else if (this.apiKeys.huggingface) {
-            apis.push('huggingface');
-          }
-        }
-        
-        return apis;
-      }
-
-      async callGroqAPI(message) {
-        // This is a simplified example - you'll need to implement the actual API call
-        // using the Groq SDK or fetch API
+      async checkServerStatus() {
         try {
-          // Simulate API call delay
-          await this.delay(1000 + Math.random() * 1000);
-          
-          // In a real implementation, you would make an actual API call here
-          // For now, we'll return a simulated response
-          return `Based on your question: "${message}", here's what I can tell you using the Groq API...\n\nThis is a simulated response. In a real implementation, you would make an actual API call to Groq with your API key.`;
+          const response = await fetch('/api/status');
+          if (response.ok) {
+            this.updateApiStatus('Connected', true);
+          } else {
+            this.updateApiStatus('Server Error', false);
+          }
         } catch (error) {
-          console.error("Groq API error:", error);
-          return null;
+          this.updateApiStatus('Offline', false);
         }
       }
 
-      async callHuggingFaceAPI(message) {
-        // This is a simplified example - you'll need to implement the actual API call
-        try {
-          await this.delay(1000 + Math.random() * 1000);
-          
-          // Simulated response
-          return `Using Hugging Face models, I analyzed your question: "${message}"\n\nThis is a simulated response. In a real implementation, you would make an actual API call to Hugging Face with your API key.`;
-        } catch (error) {
-          console.error("Hugging Face API error:", error);
-          return null;
-        }
-      }
-
-      async callAlphaVantageAPI(message) {
-        // Extract potential stock symbols from the message
-        const symbols = this.extractStockSymbols(message);
-        
-        if (symbols.length === 0) return null;
-        
-        try {
-          await this.delay(800 + Math.random() * 800);
-          
-          // Simulated response
-          return `Alpha Vantage data for ${symbols.join(', ')}:\n- Current price: $${(100 + Math.random() * 100).toFixed(2)}\n- Daily change: ${(Math.random() * 5).toFixed(2)}%`;
-        } catch (error) {
-          console.error("Alpha Vantage API error:", error);
-          return null;
-        }
-      }
-
-      async callFMPAPI(message) {
-        const symbols = this.extractStockSymbols(message);
-        
-        if (symbols.length === 0) return null;
-        
-        try {
-          await this.delay(800 + Math.random() * 800);
-          
-          // Simulated response
-          return `FMP financial data for ${symbols.join(', ')}:\n- P/E ratio: ${(10 + Math.random() * 20).toFixed(2)}\n- Market cap: $${(100 + Math.random() * 900).toFixed(0)}B`;
-        } catch (error) {
-          console.error("FMP API error:", error);
-          return null;
-        }
-      }
-
-      async callFinnhubAPI(message) {
-        const symbols = this.extractStockSymbols(message);
-        
-        if (symbols.length === 0) return null;
-        
-        try {
-          await this.delay(800 + Math.random() * 800);
-          
-          // Simulated response
-          return `Finnhub data for ${symbols.join(', ')}:\n- 52-week high: $${(120 + Math.random() * 50).toFixed(2)}\n- 52-week low: $${(80 + Math.random() * 20).toFixed(2)}`;
-        } catch (error) {
-          console.error("Finnhub API error:", error);
-          return null;
-        }
-      }
-
-      async callNewsAPI(message) {
-        // Extract potential topics from the message
-        const topics = this.extractTopics(message);
-        
-        if (topics.length === 0) return null;
-        
-        try {
-          await this.delay(1000 + Math.random() * 1000);
-          
-          // Simulated response
-          return `Latest news about ${topics.join(', ')}:\n- ${topics[0]} company announces breakthrough innovation\n- Market analysts bullish on ${topics[0]} sector\n- New regulations could impact ${topics[0]} industry`;
-        } catch (error) {
-          console.error("NewsAPI error:", error);
-          return null;
-        }
-      }
-
-      extractStockSymbols(message) {
-        // Simple pattern to extract potential stock symbols (1-5 uppercase letters)
-        const symbolPattern = /\b[A-Z]{1,5}\b/g;
-        const symbols = message.match(symbolPattern) || [];
-        
-        // Filter out common words that might match the pattern
-        const commonWords = ['I', 'A', 'YOU', 'WE', 'THE', 'AND', 'FOR', 'ARE', 'NOT'];
-        return symbols.filter(symbol => !commonWords.includes(symbol));
-      }
-
-      extractTopics(message) {
-        // Simple keyword extraction
-        const keywords = [
-          'technology', 'tech', 'ai', 'artificial intelligence', 
-          'finance', 'financial', 'market', 'stock', 
-          'business', 'company', 'companies',
-          'crypto', 'bitcoin', 'blockchain',
-          'health', 'medical', 'science',
-          'politics', 'government', 'policy'
-        ];
-        
-        const lowerMessage = message.toLowerCase();
-        return keywords.filter(keyword => lowerMessage.includes(keyword));
-      }
-
-      generateFallbackResponse(userMessage) {
-        // Fallback responses when APIs are not available
-        const fallbackResponses = [
-          "I understand you're asking about this topic. To provide you with the most accurate information, I would need to connect to specialized APIs. Please make sure your API keys are configured in the settings.",
-          "That's an interesting question! For detailed information on this topic, I would typically use specialized data APIs. You can configure your API keys by clicking on the settings icon.",
-          "I'd love to help you with that. To give you the best response, I need access to relevant data APIs. Have you configured your API keys yet?",
-          "Thanks for your question! For comprehensive answers on this topic, I usually pull data from multiple specialized sources. Please check your API configuration to enable these features.",
-          "I can help with that once I'm connected to the relevant data sources. Please make sure your API keys are properly configured in the settings."
-        ];
-        
-        return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+      updateApiStatus(status, isConnected) {
+        this.apiStatus.textContent = `Server: ${status}`;
+        this.apiStatus.style.color = isConnected ? '#10a37f' : '#ef4444';
       }
 
       renderMessages() {
@@ -1263,62 +907,6 @@
 
       delay(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
-      }
-
-      showApiKeyModal() {
-        // Populate current values if they exist
-        document.getElementById("alphaKey").value = this.apiKeys.alphaVantage || "";
-        document.getElementById("fmpKey").value = this.apiKeys.fmp || "";
-        document.getElementById("finnhubKey").value = this.apiKeys.finnhub || "";
-        document.getElementById("groqKey").value = this.apiKeys.groq || "";
-        document.getElementById("huggingfaceKey").value = this.apiKeys.huggingface || "";
-        document.getElementById("newsapiKey").value = this.apiKeys.newsapi || "";
-        
-        this.apiKeyModal.style.display = "flex";
-      }
-
-      hideApiKeyModal() {
-        this.apiKeyModal.style.display = "none";
-      }
-
-      saveApiKeys() {
-        this.apiKeys = {
-          alphaVantage: document.getElementById("alphaKey").value.trim(),
-          fmp: document.getElementById("fmpKey").value.trim(),
-          finnhub: document.getElementById("finnhubKey").value.trim(),
-          groq: document.getElementById("groqKey").value.trim(),
-          huggingface: document.getElementById("huggingfaceKey").value.trim(),
-          newsapi: document.getElementById("newsapiKey").value.trim()
-        };
-        
-        localStorage.setItem("multiApiChatKeys", JSON.stringify(this.apiKeys));
-        this.hideApiKeyModal();
-        
-        // Show confirmation message
-        const conversation = this.getCurrentConversation();
-        if (conversation) {
-          const confirmationMessage = {
-            id: Date.now(),
-            role: "assistant",
-            content: "API keys saved successfully! You can now use all features of Multi-API ChatGPT.",
-            timestamp: new Date()
-          };
-          
-          conversation.messages.push(confirmationMessage);
-          this.renderMessages();
-        }
-      }
-
-      loadApiKeys() {
-        const savedKeys = localStorage.getItem("multiApiChatKeys");
-        if (savedKeys) {
-          this.apiKeys = JSON.parse(savedKeys);
-        }
-      }
-
-      checkApiKeys() {
-        // Check if at least one API key is configured
-        return Object.values(this.apiKeys).some(key => key !== "");
       }
     }
 
