@@ -1,46 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StarLink Chat</title>
-    <link rel="stylesheet" href="css/style.css">
-    <!-- Font Awesome icons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StarLink Chat</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="chat-ai">
-
-        <!-- Sidebar with Conversations -->
-        <div class="conversations">
-            <a class="new-conversation" href="#"><i class="fas fa-plus"></i> New Chat</a>
-            <div class="list">
-                <!-- Existing conversations will appear here -->
-            </div>
-            <div class="footer">
-                <a href="#" class="close-sidebar"><i class="fas fa-times"></i> Close</a>
-            </div>
+<div class="chat-ai">
+    <div class="content">
+        <div class="messages"></div>
+        <div class="message-form">
+            <input type="text" id="chat-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
         </div>
-
-        <!-- Main Chat Content -->
-        <div class="content">
-            <div class="welcome">
-                <h1>StarLink</h1>
-            </div>
-            <div class="messages">
-                <!-- Messages will appear here -->
-            </div>
-
-            <!-- Message Input -->
-            <div class="message-form">
-                <input type="text" id="chat-input" placeholder="Type your message...">
-                <button id="send-button"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-
     </div>
-
-    <!-- JS -->
-    <script src="js/ChatAI.js" defer></script>
+</div>
+<script src="js/ChatAI.js" defer></script>
 </body>
 </html>
