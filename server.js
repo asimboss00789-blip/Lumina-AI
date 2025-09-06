@@ -26,7 +26,7 @@ app.use(express.static(path.join(__dirname)));
 
 // API response cache
 const apiCache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // API status tracking
 const apiStatus = {
@@ -37,6 +37,57 @@ const apiStatus = {
   huggingface: { available: true, lastError: null },
   newsapi: { available: true, lastError: null }
 };
+
+// API call with error handling and caching
+async function callAPI(apiName, callFunction, cacheKey = null) {
+  if (!apiStatus[apiName].available) {
+    console.log(`Skipping ${apiName} API (marked as unavailable)`);
+    return null;
+  }
+  
+  if (cacheKey && apiCache.has(cacheKey)) {
+    const cached = apiCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log(`Using cached response for ${apiName}`);
+      return cached.data;
+    }
+  }
+  
+  try {
+    const result = await callFunction();
+    apiStatus[apiName].available = true;
+    apiStatus[apiName].lastError = null;
+    
+    if (cacheKey) {
+      apiCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    }
+    
+    return result;
+  } catch (error) {
+    console.error(`${apiName} API error:`, error.response?.data || error.message);
+    apiStatus[apiName].lastError = error.response?.data || error.message;
+    
+    if (error.response) {
+      if (error.response.status === 429) { // Rate limit
+        console.log(`${apiName} API rate limited. Marking as unavailable.`);
+        apiStatus[apiName].available = false;
+        setTimeout(() => {
+          apiStatus[apiName].available = true;
+          console.log(`${apiName} API reactivated after rate limit cooldown`);
+        }, 60 * 60 * 1000);
+      }
+      else if (error.response.status === 403) { // Authentication error
+        console.log(`${apiName} API authentication failed. Check API key.`);
+        apiStatus[apiName].available = false;
+      }
+      else if (error.response.status === 400) { // Bad request
+        console.log(`${apiName} API bad request. Check parameters.`);
+      }
+    }
+    
+    return null;
+  }
+}
 
 // Extract stock symbol from message
 function extractStockSymbol(message) {
@@ -72,82 +123,83 @@ function extractKeywords(message) {
     .toLowerCase()
     .split(' ')
     .filter(word => word.length > 3 && !stopWords.has(word))
-    .join(' ') || 'technology'; // Default keyword if none found
+    .join(' ') || 'technology';
 }
 
-// API call with error handling and caching
-async function callAPI(apiName, callFunction, cacheKey = null) {
-  if (!apiStatus[apiName].available) {
-    console.log(`Skipping ${apiName} API (marked as unavailable)`);
+// Use Hugging Face for conversation
+async function getHuggingFaceResponse(message) {
+  return callAPI('huggingface', async () => {
+    const response = await axios.post(
+      'https://api-inference.huggingface.co/models/microsoft/DialoGPT-large',
+      {
+        inputs: message,
+        parameters: {
+          max_length: 150,
+          temperature: 0.7,
+          do_sample: true
+        }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.HUGGINGFACE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
+      }
+    );
+    
+    if (response.data && response.data[0] && response.data[0].generated_text) {
+      return response.data[0].generated_text;
+    }
     return null;
-  }
-  
-  if (cacheKey && apiCache.has(cacheKey)) {
-    const cached = apiCache.get(cacheKey);
-    if (Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log(`Using cached response for ${apiName}`);
-      return cached.data;
-    }
-  }
-  
-  try {
-    const result = await callFunction();
-    apiStatus[apiName].available = true;
-    apiStatus[apiName].lastError = null;
-    
-    if (cacheKey) {
-      apiCache.set(cacheKey, { data: result, timestamp: Date.now() });
-    }
-    
-    return result;
-  } catch (error) {
-    console.error(`${apiName} API error:`, error.response?.data || error.message);
-    apiStatus[apiName].lastError = error.response?.data || error.message;
-    
-    // Handle different error types
-    if (error.response) {
-      if (error.response.status === 429) { // Rate limit
-        console.log(`${apiName} API rate limited. Marking as unavailable.`);
-        apiStatus[apiName].available = false;
-        setTimeout(() => {
-          apiStatus[apiName].available = true;
-          console.log(`${apiName} API reactivated after rate limit cooldown`);
-        }, 60 * 60 * 1000);
-      }
-      else if (error.response.status === 403) { // Authentication error
-        console.log(`${apiName} API authentication failed. Check API key.`);
-        apiStatus[apiName].available = false;
-      }
-      else if (error.response.status === 400) { // Bad request
-        console.log(`${apiName} API bad request. Check parameters.`);
-        // Don't disable for bad requests, just log
-      }
-    }
-    
-    return null;
-  }
+  }, `hf_${message}`);
 }
 
-// Local response synthesis when Groq is unavailable
+// Use Groq for information retrieval
+async function getGroqInformation(message, context = '') {
+  return callAPI('groq', async () => {
+    const prompt = context 
+      ? `Context: ${context}\n\nQuestion: ${message}\n\nPlease provide accurate information:`
+      : `Question: ${message}\n\nPlease provide accurate information:`;
+    
+    const response = await axios.post(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        model: "llama-3.1-8b-instant",
+        messages: [
+          {
+            role: "system",
+            content: "You are an information retrieval system. Provide accurate, factual information based on the query. Be concise and informative."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.3
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.GROQ_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 15000
+      }
+    );
+    
+    return response.data.choices[0].message.content;
+  }, `groq_info_${message}`);
+}
+
+// Local response synthesis when APIs are unavailable
 function synthesizeResponse(userMessage, apiResults) {
   if (apiResults.length === 0) {
     return "I apologize, but I'm currently unable to access my information sources. Please try again later or ask a different question.";
   }
   
-  // Simple synthesis logic
-  let response = "Based on the information I've gathered: ";
-  
-  const financialInfo = apiResults.filter(r => r.includes('Stock') || r.includes('Price') || r.includes('Crypto'));
-  const newsInfo = apiResults.filter(r => r.includes('News') || r.includes('Financial News'));
-  
-  if (financialInfo.length > 0) {
-    response += financialInfo.join(' ') + " ";
-  }
-  
-  if (newsInfo.length > 0) {
-    response += "In recent news: " + newsInfo.map(n => n.replace(/.*News.*?:/, '')).join(' ') + " ";
-  }
-  
+  let response = "Based on the information available: ";
+  response += apiResults.join(' ') + " ";
   response += "Is there anything specific you'd like to know more about?";
   
   return response;
@@ -166,7 +218,13 @@ app.post('/api/chat', async (req, res) => {
     const apiResponses = [];
     const apiCalls = [];
     
-    // 1. Alpha Vantage (for stocks)
+    // 1. Use Hugging Face for conversation (primary)
+    apiCalls.push(getHuggingFaceResponse(userMessage));
+    
+    // 2. Use Groq for information retrieval (secondary)
+    apiCalls.push(getGroqInformation(userMessage));
+    
+    // 3. Alpha Vantage (for stocks)
     if (process.env.ALPHA_KEY && symbol) {
       apiCalls.push(
         callAPI('alpha', async () => {
@@ -186,7 +244,7 @@ app.post('/api/chat', async (req, res) => {
       );
     }
     
-    // 2. Finnhub (for stocks and crypto)
+    // 4. Finnhub (for stocks and crypto)
     if (process.env.FINNHUB_KEY) {
       if (symbol) {
         apiCalls.push(
@@ -228,7 +286,7 @@ app.post('/api/chat', async (req, res) => {
       }
     }
     
-    // 3. FMP (for company profiles)
+    // 5. FMP (for company profiles)
     if (process.env.FMP_KEY && symbol) {
       apiCalls.push(
         callAPI('fmp', async () => {
@@ -246,11 +304,10 @@ app.post('/api/chat', async (req, res) => {
       );
     }
     
-    // 4. NewsAPI (for general news)
+    // 6. NewsAPI (for general news)
     if (process.env.NEWSAPI_KEY) {
       apiCalls.push(
         callAPI('newsapi', async () => {
-          // Use a more specific query based on user message
           const query = keywords || 'latest news';
           const response = await axios.get(
             `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=3&apiKey=${process.env.NEWSAPI_KEY}`,
@@ -258,84 +315,11 @@ app.post('/api/chat', async (req, res) => {
           );
           
           if (response.data.articles && response.data.articles.length > 0) {
-            // Get the most relevant article (not just the first one)
             const article = response.data.articles[0];
             return `News Update: ${article.title}.`;
           }
           return null;
         }, `newsapi_${keywords}`, 30000)
-      );
-    }
-    
-    // 5. Groq (for AI analysis) - with better error handling
-    if (process.env.GROQ_KEY) {
-      apiCalls.push(
-        callAPI('groq', async () => {
-          try {
-            const response = await axios.post(
-              'https://api.groq.com/openai/v1/chat/completions',
-              {
-                model: "llama-3.1-8b-instant", // More reliable model
-                messages: [
-                  {
-                    role: "system",
-                    content: "You are a helpful AI assistant that provides concise and informative responses."
-                  },
-                  {
-                    role: "user",
-                    content: userMessage
-                  }
-                ],
-                max_tokens: 800,
-                temperature: 0.7
-              },
-              {
-                headers: {
-                  'Authorization': `Bearer ${process.env.GROQ_KEY}`,
-                  'Content-Type': 'application/json'
-                },
-                timeout: 15000
-              }
-            );
-            
-            return response.data.choices[0].message.content;
-          } catch (error) {
-            console.error('Groq API detailed error:', error.response?.data);
-            throw error;
-          }
-        }, `groq_${userMessage}`, 60000)
-      );
-    }
-    
-    // 6. Hugging Face - with better model selection
-    if (process.env.HUGGINGFACE_KEY) {
-      apiCalls.push(
-        callAPI('huggingface', async () => {
-          try {
-            // Try a more commonly available model
-            const response = await axios.post(
-              'https://api-inference.huggingface.co/models/google/flan-t5-large',
-              {
-                inputs: userMessage
-              },
-              {
-                headers: {
-                  'Authorization': `Bearer ${process.env.HUGGINGFACE_KEY}`,
-                  'Content-Type': 'application/json'
-                },
-                timeout: 10000
-              }
-            );
-            
-            if (response.data && response.data[0] && response.data[0].generated_text) {
-              return response.data[0].generated_text;
-            }
-            return null;
-          } catch (error) {
-            console.error('Hugging Face detailed error:', error.response?.data);
-            throw error;
-          }
-        }, `hf_${userMessage}`)
       );
     }
     
@@ -349,14 +333,21 @@ app.post('/api/chat', async (req, res) => {
     if (validResults.length === 0) {
       finalResponse = "I apologize, but I'm currently unable to access my information sources. Please try again later.";
     } else {
-      // Try to use Groq response if available
-      const groqResult = validResults.find(r => typeof r === 'string' && r.length > 20);
+      // Prioritize Hugging Face for conversation
+      const huggingFaceResult = validResults.find(r => r && typeof r === 'string' && r.length > 10);
       
-      if (groqResult) {
-        finalResponse = groqResult;
+      if (huggingFaceResult) {
+        finalResponse = huggingFaceResult;
       } else {
-        // Local synthesis if Groq is not available
-        finalResponse = synthesizeResponse(userMessage, validResults);
+        // Fallback to Groq or other information
+        const groqResult = validResults.find(r => r && typeof r === 'string' && r.length > 20);
+        
+        if (groqResult) {
+          finalResponse = groqResult;
+        } else {
+          // Local synthesis if primary APIs are not available
+          finalResponse = synthesizeResponse(userMessage, validResults);
+        }
       }
     }
     
@@ -383,6 +374,20 @@ app.get('/health', (req, res) => {
     },
     api_status: apiStatus
   });
+});
+
+// API status endpoint
+app.get('/api/status', (req, res) => {
+  res.json(apiStatus);
+});
+
+// Reset API status endpoint (for testing)
+app.post('/api/reset-status', (req, res) => {
+  Object.keys(apiStatus).forEach(api => {
+    apiStatus[api].available = true;
+    apiStatus[api].lastError = null;
+  });
+  res.json({ message: 'API status reset', status: apiStatus });
 });
 
 // Start the server
