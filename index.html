@@ -1,55 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StarLink</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StarLink</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="chat-ai">
-
-    <!-- Sidebar -->
-    <div class="conversations">
-      <a class="new-conversation" href="#"><i class="fas fa-plus"></i> New Chat</a>
-      <div class="list"></div>
-      <div class="footer">
-        <a class="close-sidebar" href="#"><i class="fas fa-times"></i> Close</a>
-      </div>
-    </div>
-
-    <!-- Main Chat Content -->
-    <div class="content">
-      <div class="header">
+<div class="chat-container">
+    <header>
         <h1>StarLink</h1>
-      </div>
-      <div class="messages"></div>
-      <div class="message-form">
-        <input type="text" id="chat-input" placeholder="Type your message..." autofocus>
-        <button id="send-button"><i class="fas fa-paper-plane"></i></button>
-        <button id="voice-button"><i class="fas fa-microphone"></i></button>
-      </div>
+        <p class="subtitle">Made by Fallensoul</p>
+    </header>
+
+    <div class="messages" id="messages">
+        <!-- Chat messages appear here -->
     </div>
 
-  </div>
+    <form id="message-form">
+        <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off" required>
+        <button type="submit" id="send-button">Send</button>
+    </form>
+</div>
 
-  <!-- Chat AI JS -->
-  <script src="js/ChatAI.js" defer></script>
-  <script>
-    // Initialize StarLink Chat
-    const chat = new ChatAI({
-      container: '.chat-ai',
-      api_key: '', // empty for now, will be set in backend/api
-      model: 'starlink-model',
-      max_tokens: 500,
-    });
-
-    // Example: special prompt for "who made you?"
-    chat.specialResponses = {
-      "who made you": "Fallensoul",
-      "who created you": "Fallensoul"
-    };
-  </script>
+<script src="js/ChatAI.js" defer></script>
 </body>
 </html>
