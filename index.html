@@ -3,58 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StarLink Chat</title>
+    <title>StarLink</title>
     <link rel="stylesheet" href="css/style.css">
-    <!-- Font Awesome icons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js" defer></script>
 </head>
 <body>
     <div class="chat-ai">
 
-        <!-- Sidebar: Conversations -->
+        <!-- Conversations Sidebar -->
         <div class="conversations">
             <a class="new-conversation" href="#"><i class="fas fa-plus"></i> New Chat</a>
             <div class="list">
-                <!-- Conversations appear here -->
-            </div>
-            <div class="footer">
-                <a href="#" class="close-sidebar"><i class="fas fa-times"></i> Close</a>
+                <!-- Existing conversations will appear here -->
             </div>
         </div>
 
-        <!-- Chat content -->
+        <!-- Chat Content -->
         <div class="content">
-            <!-- Welcome / initial page -->
-            <div class="welcome">
-                <h1>StarLink Chat</h1>
-                <p>Made with care by StarLink 💫</p>
-                <a href="#" class="open-database"><i class="fa-regular fa-folder-open"></i> Open Database</a>
-            </div>
-
-            <!-- Chat messages -->
             <div class="messages">
-                <!-- Messages will appear here dynamically -->
+                <!-- Chat messages appear here -->
             </div>
 
-            <!-- Input form -->
+            <!-- Message Input -->
             <div class="message-form">
                 <input type="text" id="chat-input" placeholder="Type your message...">
-                <button id="send-button"><i class="fa-solid fa-paper-plane"></i> Send</button>
-            </div>
-
-            <!-- API selector -->
-            <div class="api-selector">
-                <label for="api-select">Choose API:</label>
-                <select id="api-select">
-                    <option value="huggingface">HuggingFace</option>
-                    <option value="alpha">Alpha</option>
-                    <option value="fmp">FMP</option>
-                    <option value="finnhub">Finnhub</option>
-                    <option value="groq">Groq</option>
-                    <option value="newsapi">NewsAPI</option>
-                </select>
+                <button id="send-button"><i class="fas fa-paper-plane"></i> Send</button>
             </div>
         </div>
+
     </div>
 
     <!-- Chat AI JS -->
