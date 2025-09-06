@@ -7,7 +7,7 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Debug: Log all environment variables (mask sensitive data)
+// Debug: Log environment variables
 console.log('=== ENVIRONMENT VARIABLES ===');
 console.log('PORT:', process.env.PORT);
 console.log('NODE_ENV:', process.env.NODE_ENV);
@@ -31,7 +31,6 @@ function validateApiKey(apiName, apiKey) {
     return false;
   }
   
-  // Basic validation for each API key format
   switch(apiName) {
     case 'Alpha Vantage':
       if (apiKey.length !== 16) console.warn(`⚠️ Alpha Vantage key should be 16 chars, got ${apiKey.length}`);
@@ -65,32 +64,6 @@ const apiKeys = {
 Object.entries(apiKeys).forEach(([name, key]) => validateApiKey(name, key));
 console.log('==========================\n');
 
-// Determine which API to use based on the user's message
-function determineAPI(message) {
-  const lowerMsg = message.toLowerCase();
-  
-  if (lowerMsg.includes('stock') || lowerMsg.includes('price') || lowerMsg.includes('finance') || 
-      lowerMsg.includes('market') || lowerMsg.includes('investment')) {
-    
-    if (lowerMsg.includes('news') || lowerMsg.includes('headline')) {
-      return 'finnhub-news';
-    } else if (lowerMsg.includes('crypto') || lowerMsg.includes('bitcoin') || lowerMsg.includes('ethereum')) {
-      return 'finnhub-crypto';
-    } else if (lowerMsg.includes('profile') || lowerMsg.includes('company') || 
-               lowerMsg.includes('balance') || lowerMsg.includes('income')) {
-      return 'fmp';
-    } else {
-      return 'alpha-vantage';
-    }
-  } 
-  else if (lowerMsg.includes('news') || lowerMsg.includes('headline') || lowerMsg.includes('article')) {
-    return 'newsapi';
-  } 
-  else {
-    return 'groq';
-  }
-}
-
 // Extract stock symbol from message
 function extractStockSymbol(message) {
   const words = message.split(' ');
@@ -122,168 +95,187 @@ function extractCryptoSymbol(message) {
   return null;
 }
 
-// API endpoint for chat
+// API endpoint for chat - Now uses multiple APIs
 app.post('/api/chat', async (req, res) => {
   const userMessage = req.body.message;
-  const apiType = determineAPI(userMessage);
-
-  console.log(`📨 Received message: "${userMessage}" -> Using API: ${apiType}`);
+  console.log(`📨 Received message: "${userMessage}"`);
 
   try {
-    let responseData;
+    // Array to store all API responses
+    const apiResponses = [];
+    const symbol = extractStockSymbol(userMessage);
+    const cryptoSymbol = extractCryptoSymbol(userMessage);
+    const lowerMsg = userMessage.toLowerCase();
+
+    // Call all relevant APIs in parallel
+    const apiPromises = [];
+
+    // 1. Alpha Vantage (for stocks)
+    if (process.env.ALPHA_KEY && symbol) {
+      apiPromises.push(
+        axios.get(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${process.env.ALPHA_KEY}`, { timeout: 10000 })
+          .then(response => {
+            if (response.data['Global Quote'] && response.data['Global Quote']['05. price']) {
+              const price = response.data['Global Quote']['05. price'];
+              const change = response.data['Global Quote']['09. change'];
+              const changePercent = response.data['Global Quote']['10. change percent'];
+              apiResponses.push(`Alpha Vantage: The current price of ${symbol} is $${price} (${change}, ${changePercent}).`);
+            }
+          })
+          .catch(error => {
+            console.error('Alpha Vantage error:', error.message);
+          })
+      );
+    }
+
+    // 2. Finnhub (for stocks and crypto)
+    if (process.env.FINNHUB_KEY) {
+      if (symbol) {
+        apiPromises.push(
+          axios.get(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${process.env.FINNHUB_KEY}`, { timeout: 10000 })
+            .then(response => {
+              if (response.data.c) {
+                const price = response.data.c;
+                const change = response.data.d;
+                const changePercent = response.data.dp;
+                apiResponses.push(`Finnhub: The current price of ${symbol} is $${price} (${change}, ${changePercent}%).`);
+              }
+            })
+            .catch(error => {
+              console.error('Finnhub stock error:', error.message);
+            })
+        );
+      }
+
+      if (cryptoSymbol) {
+        apiPromises.push(
+          axios.get(`https://finnhub.io/api/v1/quote?symbol=${cryptoSymbol}&token=${process.env.FINNHUB_KEY}`, { timeout: 10000 })
+            .then(response => {
+              if (response.data.c) {
+                const price = response.data.c;
+                const change = response.data.d;
+                const changePercent = response.data.dp;
+                const cryptoName = cryptoSymbol.split(':')[0];
+                apiResponses.push(`Finnhub: The current price of ${cryptoName} is $${price} (${change}, ${changePercent}%).`);
+              }
+            })
+            .catch(error => {
+              console.error('Finnhub crypto error:', error.message);
+            })
+        );
+      }
+
+      // Finnhub news
+      apiPromises.push(
+        axios.get(`https://finnhub.io/api/v1/news?category=general&token=${process.env.FINNHUB_KEY}`, { timeout: 10000 })
+          .then(response => {
+            if (response.data && response.data.length > 0) {
+              const topArticle = response.data[0];
+              apiResponses.push(`Finnhub News: ${topArticle.headline}. Source: ${topArticle.source}`);
+            }
+          })
+          .catch(error => {
+            console.error('Finnhub news error:', error.message);
+          })
+      );
+    }
+
+    // 3. FMP (for company profiles)
+    if (process.env.FMP_KEY && symbol) {
+      apiPromises.push(
+        axios.get(`https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${process.env.FMP_KEY}`, { timeout: 10000 })
+          .then(response => {
+            if (response.data && response.data.length > 0) {
+              const company = response.data[0];
+              apiResponses.push(`FMP: ${company.companyName} (${symbol}) - Price: $${company.price}. ${company.description.substring(0, 100)}...`);
+            }
+          })
+          .catch(error => {
+            console.error('FMP error:', error.message);
+          })
+      );
+    }
+
+    // 4. NewsAPI (for general news)
+    if (process.env.NEWSAPI_KEY) {
+      apiPromises.push(
+        axios.get(`https://newsapi.org/v2/top-headlines?country=us&apiKey=${process.env.NEWSAPI_KEY}`, { timeout: 10000 })
+          .then(response => {
+            if (response.data.articles && response.data.articles.length > 0) {
+              const topArticle = response.data.articles[0];
+              apiResponses.push(`NewsAPI: Top news - ${topArticle.title}. Source: ${topArticle.source.name}`);
+            }
+          })
+          .catch(error => {
+            console.error('NewsAPI error:', error.message);
+          })
+      );
+    }
+
+    // 5. Groq (for general AI response) - Using correct model
+    if (process.env.GROQ_KEY) {
+      apiPromises.push(
+        axios.post('https://api.groq.com/openai/v1/chat/completions', {
+          model: "mixtral-8x7b-32768", // Fixed model name
+          messages: [{ role: "user", content: userMessage }],
+          max_tokens: 1024
+        }, {
+          headers: {
+            'Authorization': `Bearer ${process.env.GROQ_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        })
+          .then(response => {
+            apiResponses.push(`Groq AI: ${response.data.choices[0].message.content}`);
+          })
+          .catch(error => {
+            console.error('Groq error:', error.message);
+          })
+      );
+    }
+
+    // 6. Hugging Face (for alternative AI response)
+    if (process.env.HUGGINGFACE_KEY) {
+      apiPromises.push(
+        axios.post('https://api-inference.huggingface.co/models/google/flan-t5-xxl', {
+          inputs: userMessage
+        }, {
+          headers: {
+            'Authorization': `Bearer ${process.env.HUGGINGFACE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        })
+          .then(response => {
+            if (response.data && response.data[0] && response.data[0].generated_text) {
+              apiResponses.push(`Hugging Face: ${response.data[0].generated_text}`);
+            }
+          })
+          .catch(error => {
+            console.error('Hugging Face error:', error.message);
+          })
+      );
+    }
+
+    // Wait for all API calls to complete
+    await Promise.allSettled(apiPromises);
+
+    // Combine all responses into a single message
+    let combinedResponse = "I've gathered information from multiple sources:\n\n";
     
-    if (apiType === 'alpha-vantage') {
-      if (!process.env.ALPHA_KEY) {
-        throw new Error('Alpha Vantage API key not configured');
-      }
-      
-      const symbol = extractStockSymbol(userMessage);
-      if (!symbol) {
-        responseData = "Please specify a stock symbol, for example: 'What is the price of AAPL?'";
-      } else {
-        const apiKey = process.env.ALPHA_KEY;
-        const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
-        
-        console.log(`🔍 Calling Alpha Vantage API for symbol: ${symbol}`);
-        const response = await axios.get(url, { timeout: 10000 });
-        const data = response.data;
-        
-        if (data['Global Quote'] && data['Global Quote']['05. price']) {
-          const price = data['Global Quote']['05. price'];
-          const change = data['Global Quote']['09. change'];
-          const changePercent = data['Global Quote']['10. change percent'];
-          responseData = `The current price of ${symbol} is $${price} (${change}, ${changePercent}).`;
-        } else {
-          responseData = `Sorry, I couldn't find data for ${symbol}. Please check the symbol and try again.`;
-        }
-      }
-    } 
-    else if (apiType === 'finnhub-crypto') {
-      if (!process.env.FINNHUB_KEY) {
-        throw new Error('Finnhub API key not configured');
-      }
-      
-      const symbol = extractCryptoSymbol(userMessage);
-      if (!symbol) {
-        responseData = "Please specify a cryptocurrency, for example: 'What is the price of Bitcoin?'";
-      } else {
-        const apiKey = process.env.FINNHUB_KEY;
-        const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`;
-        
-        console.log(`🔍 Calling Finnhub API for crypto: ${symbol}`);
-        const response = await axios.get(url, { timeout: 10000 });
-        const data = response.data;
-        
-        if (data.c) {
-          const price = data.c;
-          const change = data.d;
-          const changePercent = data.dp;
-          const cryptoName = symbol.split(':')[0];
-          responseData = `The current price of ${cryptoName} is $${price} (${change}, ${changePercent}%).`;
-        } else {
-          responseData = `Sorry, I couldn't find data for ${symbol}. Please try again.`;
-        }
-      }
-    } 
-    else if (apiType === 'finnhub-news') {
-      if (!process.env.FINNHUB_KEY) {
-        throw new Error('Finnhub API key not configured');
-      }
-      
-      const apiKey = process.env.FINNHUB_KEY;
-      const url = `https://finnhub.io/api/v1/news?category=general&token=${apiKey}`;
-      
-      console.log('🔍 Calling Finnhub API for news');
-      const response = await axios.get(url, { timeout: 10000 });
-      const articles = response.data;
-      
-      if (articles && articles.length > 0) {
-        const topArticle = articles[0];
-        responseData = `Latest financial news: ${topArticle.headline}. Source: ${topArticle.source}`;
-      } else {
-        responseData = "Sorry, I couldn't fetch financial news at the moment.";
-      }
-    } 
-    else if (apiType === 'fmp') {
-      if (!process.env.FMP_KEY) {
-        throw new Error('FMP API key not configured');
-      }
-      
-      const symbol = extractStockSymbol(userMessage);
-      if (!symbol) {
-        responseData = "Please specify a stock symbol for company information, for example: 'Show me the profile of AAPL'";
-      } else {
-        const apiKey = process.env.FMP_KEY;
-        const url = `https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${apiKey}`;
-        
-        console.log(`🔍 Calling FMP API for company profile: ${symbol}`);
-        const response = await axios.get(url, { timeout: 10000 });
-        const data = response.data;
-        
-        if (data && data.length > 0) {
-          const company = data[0];
-          responseData = `Company: ${company.companyName} (${symbol})\nPrice: $${company.price}\nDescription: ${company.description.substring(0, 200)}...`;
-        } else {
-          responseData = `Sorry, I couldn't find company data for ${symbol}.`;
-        }
-      }
-    } 
-    else if (apiType === 'newsapi') {
-      if (!process.env.NEWSAPI_KEY) {
-        throw new Error('NewsAPI key not configured');
-      }
-      
-      const apiKey = process.env.NEWSAPI_KEY;
-      const url = `https://newsapi.org/v2/top-headlines?country=us&apiKey=${apiKey}`;
-      
-      console.log('🔍 Calling NewsAPI for headlines');
-      const response = await axios.get(url, { timeout: 10000 });
-      const articles = response.data.articles;
-      
-      if (articles && articles.length > 0) {
-        const topArticle = articles[0];
-        responseData = `Top news: ${topArticle.title}. Source: ${topArticle.source.name}`;
-      } else {
-        responseData = "Sorry, I couldn't fetch news at the moment.";
-      }
-    } 
-    else {
-      if (!process.env.GROQ_KEY) {
-        throw new Error('Groq API key not configured');
-      }
-      
-      const apiKey = process.env.GROQ_KEY;
-      const url = 'https://api.groq.com/openai/v1/chat/completions';
-      const payload = {
-        model: "llama2-70b-4096",
-        messages: [{ role: "user", content: userMessage }],
-        max_tokens: 1024
-      };
-      
-      console.log('🔍 Calling Groq API for general response');
-      const response = await axios.post(url, payload, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 10000
+    if (apiResponses.length > 0) {
+      apiResponses.forEach((response, index) => {
+        combinedResponse += `${index + 1}. ${response}\n\n`;
       });
-      
-      responseData = response.data.choices[0].message.content;
-    }
-    
-    res.json({ response: responseData });
-  } catch (error) {
-    console.error('API error:', error.response?.data || error.message);
-    
-    // Provide more specific error messages
-    if (error.response?.status === 401) {
-      res.status(500).json({ error: 'Invalid API key. Please check your API key configuration.' });
-    } else if (error.code === 'ECONNABORTED') {
-      res.status(500).json({ error: 'Request timeout. The API service might be slow or unavailable.' });
     } else {
-      res.status(500).json({ error: 'An error occurred while processing your request.' });
+      combinedResponse = "Sorry, I couldn't retrieve any information from the APIs. Please try again later.";
     }
+
+    res.json({ response: combinedResponse });
+  } catch (error) {
+    console.error('Overall API error:', error.message);
+    res.status(500).json({ error: 'An error occurred while processing your request.' });
   }
 });
 
