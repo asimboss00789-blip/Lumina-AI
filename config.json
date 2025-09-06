@@ -1,0 +1,22 @@
+{
+  "app": {
+    "name": "Lumina AI",
+    "version": "1.0.0",
+    "description": "AI chat application using multiple APIs"
+  },
+  "apiSettings": {
+    "timeout": 10000,
+    "retryAttempts": 3,
+    "fallbackEnabled": true
+  },
+  "chatSettings": {
+    "maxMessageLength": 1000,
+    "messageHistoryLimit": 50,
+    "typingIndicatorDelay": 500
+  },
+  "uiSettings": {
+    "theme": "dark",
+    "animations": true,
+    "soundEffects": false
+  }
+}
