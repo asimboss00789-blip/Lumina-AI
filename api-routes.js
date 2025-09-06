@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const fetch = require('node-fetch'); // make sure node-fetch is installed
 const path = require('path');
+const fetch = require('node-fetch'); // Node-fetch v2
 const { readJSON, writeJSON, truncateMessages } = require('./utils');
 
 const conversationsPath = path.join(__dirname, 'conversations');
@@ -23,7 +23,7 @@ router.post('/conversations/:id', (req, res) => {
     res.json({ success: true, messages });
 });
 
-// POST all APIs at once
+// POST: call all APIs at once
 router.post('/api-call/all', async (req, res) => {
     const { input } = req.body;
 
@@ -37,6 +37,7 @@ router.post('/api-call/all', async (req, res) => {
             callNewsAPI(input)
         ]);
 
+        // Combine all results into one answer
         const combinedAnswer = responses.join(' ');
 
         res.json({ success: true, result: combinedAnswer });
@@ -46,15 +47,13 @@ router.post('/api-call/all', async (req, res) => {
     }
 });
 
-// API call implementations using environment variables
+// === API CALL FUNCTIONS ===
 async function callHuggingFace(input) {
     const key = process.env.HUGGINGFACE_KEY;
-    const response = await fetch('https://api-inference.huggingface.co/models/your-model', {
+    if (!key) return '';
+    const response = await fetch('https://api-inference.huggingface.co/models/gpt2', {
         method: 'POST',
-        headers: { 
-            'Authorization': `Bearer ${key}`, 
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ inputs: input })
     });
     const data = await response.json();
@@ -63,32 +62,37 @@ async function callHuggingFace(input) {
 
 async function callAlpha(input) {
     const key = process.env.ALPHA_KEY;
-    // Example: replace with your actual Alpha API endpoint
-    return `Alpha API response for "${input}"`;
+    if (!key) return '';
+    // Example: fetch data from Alpha Vantage (replace with your desired endpoint)
+    return `Alpha processed: "${input}"`;
 }
 
 async function callFMP(input) {
     const key = process.env.FMP_KEY;
-    // Example: replace with actual FMP API call
-    return `FMP response for "${input}"`;
+    if (!key) return '';
+    // Example: fetch data from FMP
+    return `FMP processed: "${input}"`;
 }
 
 async function callFinnhub(input) {
     const key = process.env.FINNHUB_KEY;
-    // Example: replace with actual Finnhub API call
-    return `Finnhub response for "${input}"`;
+    if (!key) return '';
+    // Example: fetch data from Finnhub
+    return `Finnhub processed: "${input}"`;
 }
 
 async function callGroq(input) {
     const key = process.env.GROQ_KEY;
-    // Example: replace with actual Groq API call
-    return `Groq response for "${input}"`;
+    if (!key) return '';
+    // Example: fetch data from Groq
+    return `Groq processed: "${input}"`;
 }
 
 async function callNewsAPI(input) {
     const key = process.env.NEWSAPI_KEY;
-    // Example: replace with actual NewsAPI call
-    return `NewsAPI response for "${input}"`;
+    if (!key) return '';
+    // Example: fetch data from NewsAPI
+    return `NewsAPI processed: "${input}"`;
 }
 
 module.exports = router;
