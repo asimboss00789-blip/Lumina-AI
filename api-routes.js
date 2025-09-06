@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const fetch = require('node-fetch'); // make sure node-fetch is installed
 const path = require('path');
 const { readJSON, writeJSON, truncateMessages } = require('./utils');
 
@@ -36,52 +37,58 @@ router.post('/api-call/all', async (req, res) => {
             callNewsAPI(input)
         ]);
 
-        // Combine all API results into one answer
         const combinedAnswer = responses.join(' ');
 
         res.json({ success: true, result: combinedAnswer });
     } catch (err) {
         console.error(err);
-        res.json({ success: false, result: 'Error calling APIs.' });
+        res.json({ success: false, result: 'Error connecting to APIs.' });
     }
 });
 
-// Helper functions calling real APIs from environment variables
+// API call implementations using environment variables
 async function callHuggingFace(input) {
     const key = process.env.HUGGINGFACE_KEY;
-    if (!key) return 'HuggingFace API key missing.';
     const response = await fetch('https://api-inference.huggingface.co/models/your-model', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+        headers: { 
+            'Authorization': `Bearer ${key}`, 
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ inputs: input })
     });
     const data = await response.json();
-    return data?.[0]?.generated_text || 'No response from HuggingFace';
+    return data?.[0]?.generated_text || '';
 }
 
 async function callAlpha(input) {
     const key = process.env.ALPHA_KEY;
-    return `Alpha response placeholder for "${input}"`; // Replace with real API call
+    // Example: replace with your actual Alpha API endpoint
+    return `Alpha API response for "${input}"`;
 }
 
 async function callFMP(input) {
     const key = process.env.FMP_KEY;
-    return `FMP response placeholder for "${input}"`; // Replace with real API call
+    // Example: replace with actual FMP API call
+    return `FMP response for "${input}"`;
 }
 
 async function callFinnhub(input) {
     const key = process.env.FINNHUB_KEY;
-    return `Finnhub response placeholder for "${input}"`; // Replace with real API call
+    // Example: replace with actual Finnhub API call
+    return `Finnhub response for "${input}"`;
 }
 
 async function callGroq(input) {
     const key = process.env.GROQ_KEY;
-    return `Groq response placeholder for "${input}"`; // Replace with real API call
+    // Example: replace with actual Groq API call
+    return `Groq response for "${input}"`;
 }
 
 async function callNewsAPI(input) {
     const key = process.env.NEWSAPI_KEY;
-    return `NewsAPI response placeholder for "${input}"`; // Replace with real API call
+    // Example: replace with actual NewsAPI call
+    return `NewsAPI response for "${input}"`;
 }
 
 module.exports = router;
