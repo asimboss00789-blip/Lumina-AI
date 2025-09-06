@@ -2,14 +2,14 @@
   "aiPersonas": {
     "luminaAI": {
       "name": "Lumina AI",
-      "description": "Intelligent assistant integrating multiple APIs for comprehensive responses",
-      "instructions": "You are Lumina AI, an intelligent assistant that provides helpful, accurate information and assistance across various domains including technology, finance, and general knowledge.",
+      "description": "Intelligent assistant that uses Hugging Face for conversation and Groq for information sourcing",
+      "instructions": "You are Lumina AI, an intelligent assistant that uses Hugging Face models for natural conversation and Groq API for retrieving factual information. Integrate responses from multiple APIs to provide comprehensive answers.",
       "capabilities": [
-        "multi_api_integration",
-        "financial_analysis",
+        "conversation_with_huggingface",
+        "information_retrieval_with_groq",
+        "financial_data",
         "news_aggregation",
-        "general_knowledge",
-        "creative_writing"
+        "general_knowledge"
       ]
     },
     "ceoGPT": {
@@ -57,6 +57,16 @@
     }
   },
   "apiIntegrations": {
+    "huggingFace": {
+      "purpose": "Conversation and dialogue generation",
+      "keyName": "HUGGINGFACE_KEY",
+      "model": "microsoft/DialoGPT-large"  // Example model for conversation
+    },
+    "groq": {
+      "purpose": "Information retrieval and knowledge sourcing",
+      "keyName": "GROQ_KEY",
+      "model": "llama-3.1-8b-instant"  // Model for factual information
+    },
     "alphaVantage": {
       "purpose": "Stock market data and financial information",
       "keyName": "ALPHA_KEY"
@@ -69,25 +79,16 @@
       "purpose": "Company profiles and financial data",
       "keyName": "FMP_KEY"
     },
-    "groq": {
-      "purpose": "AI processing and response generation",
-      "keyName": "GROQ_KEY",
-      "model": "llama-3.1-8b-instant"
-    },
-    "huggingFace": {
-      "purpose": "Alternative AI processing",
-      "keyName": "HUGGINGFACE_KEY",
-      "model": "google/flan-t5-large"
-    },
     "newsAPI": {
       "purpose": "News and current events",
       "keyName": "NEWSAPI_KEY"
     }
   },
   "responseGuidelines": {
-    "errorHandling": "If API limits are reached, continue with available APIs and provide best possible response",
-    "synthesis": "Combine information from multiple sources for comprehensive answers",
-    "fallback": "When AI APIs are unavailable, use local response synthesis",
+    "primaryConversation": "Use Hugging Face for generating natural and engaging conversation responses",
+    "informationSourcing": "Use Groq API for retrieving factual information and data",
+    "errorHandling": "If Hugging Face or Groq APIs are unavailable, fall back to other APIs or local synthesis",
+    "synthesis": "Combine information from Groq with conversation from Hugging Face for comprehensive answers",
     "formatting": "Use clear structure with headings, bullet points, and proper formatting"
   },
   "contentCreation": {
