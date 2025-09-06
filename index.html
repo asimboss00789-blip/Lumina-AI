@@ -1,21 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StarLink Chat</title>
-<link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarLink Chat</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="chat-ai">
-    <div class="content">
-        <div class="messages"></div>
-        <div class="message-form">
-            <input type="text" id="chat-input" placeholder="Type your message...">
-            <button id="send-button">Send</button>
+    <div class="chat-ai">
+
+        <!-- Conversations Sidebar -->
+        <div class="conversations">
+            <a class="new-conversation" href="#"><i class="fas fa-plus"></i> New Chat</a>
+            <div class="list">
+                <!-- Existing conversations will appear here -->
+            </div>
+            <div class="footer">
+                <span class="chat-brand">StarLink</span>
+                <a href="#" class="close-sidebar"><i class="fas fa-times"></i></a>
+            </div>
         </div>
+
+        <!-- Chat Content -->
+        <div class="content">
+            <div class="messages">
+                <!-- Chat messages appear here -->
+            </div>
+
+            <!-- Message Input -->
+            <div class="message-form">
+                <input type="text" id="chat-input" placeholder="Type your message...">
+                <button id="send-button">Send</button>
+            </div>
+        </div>
+
+        <!-- API Selector (optional, can be hidden since all APIs are called) -->
+        <div class="api-selector">
+            <span>Using: HuggingFace + Alpha + FMP + Finnhub + Groq + NewsAPI</span>
+        </div>
+
     </div>
-</div>
-<script src="js/ChatAI.js" defer></script>
+
+    <!-- Font Awesome icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js" defer></script>
+
+    <!-- ChatAI JS -->
+    <script src="js/ChatAI.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            new ChatAI({
+                container: '.chat-ai',
+                model: 'all-apis', // placeholder, all APIs called
+            });
+        });
+    </script>
 </body>
 </html>
